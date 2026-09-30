@@ -107,4 +107,61 @@ export class DraftApiClient {
     }));
     return result.draft;
   }
+
+  private async commissionerMutation(
+    code: string,
+    path: string,
+    body?: Record<string, unknown>,
+  ): Promise<PublicDraft> {
+    const result = await readJson<{ draft: PublicDraft }>(await this.fetcher(path, {
+      method: 'POST',
+      headers: { ...this.authHeaders(code), 'content-type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+    }));
+    return result.draft;
+  }
+
+  startDraft(code: string): Promise<PublicDraft> {
+    return this.commissionerMutation(code, '/api/commissioner/start');
+  }
+
+  pauseDraft(code: string): Promise<PublicDraft> {
+    return this.commissionerMutation(code, '/api/commissioner/pause');
+  }
+
+  resumeDraft(code: string): Promise<PublicDraft> {
+    return this.commissionerMutation(code, '/api/commissioner/resume');
+  }
+
+  skipActive(code: string, slotId: string): Promise<PublicDraft> {
+    return this.commissionerMutation(code, '/api/commissioner/skip', { slotId });
+  }
+
+  changeClock(code: string, clockDurationMs: number): Promise<PublicDraft> {
+    return this.commissionerMutation(code, '/api/commissioner/clock', { clockDurationMs });
+  }
+
+  proxyPick(code: string, ownerId: string, slotId: string, playerId: string): Promise<PublicDraft> {
+    return this.commissionerMutation(code, '/api/commissioner/proxy-pick', { ownerId, slotId, playerId });
+  }
+
+  correctPick(code: string, slotId: string, playerId: string): Promise<PublicDraft> {
+    return this.commissionerMutation(code, '/api/commissioner/correct-pick', { slotId, playerId });
+  }
+
+  removePick(code: string, slotId: string): Promise<PublicDraft> {
+    return this.commissionerMutation(code, '/api/commissioner/remove-pick', { slotId });
+  }
+
+  resetDraft(code: string): Promise<PublicDraft> {
+    return this.commissionerMutation(code, '/api/commissioner/reset', { confirmation: 'RESET' });
+  }
+
+  async exportCsv(code: string): Promise<string> {
+    const response = await this.fetcher('/api/commissioner/export', { headers: this.authHeaders(code) });
+    if (!response.ok) {
+      await readJson<never>(response);
+    }
+    return response.text();
+  }
 }
