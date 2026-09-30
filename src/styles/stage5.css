@@ -1,0 +1,34 @@
+/* Stage 5 commissioner tools */
+.commissioner-page { display: grid; gap: 14px; }
+.commissioner-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.commissioner-card { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 13px; }
+.commissioner-card h3 { margin: 0 0 10px; font-size: 14px; }
+.commissioner-wide { grid-column: 1 / -1; }
+.commissioner-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.button.danger { background: var(--red); border-color: var(--red); color: #fff; }
+.commissioner-detail { margin: 9px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.commissioner-message { margin: 0; padding: 9px 10px; border-left: 3px solid var(--green); background: rgba(42,110,42,.08); color: var(--green); font-size: 10px; font-weight: 700; }
+.commissioner-error { margin: 0; }
+.commissioner-player-search { display: grid; gap: 8px; margin-top: 8px; }
+.commissioner-player-results { display: grid; gap: 6px; max-height: 320px; overflow-y: auto; }
+.commissioner-player-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); }
+.commissioner-player-row > div:first-child { flex: 1; min-width: 0; }
+.commissioner-player-row strong { display: block; font-size: 12px; }
+.commissioner-player-row div > span { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+.commissioner-player-action { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.commissioner-correction-actions { display: flex; gap: 8px; margin: 8px 0; }
+.destructive-card { border-color: rgba(184,50,50,.35); background: rgba(184,50,50,.04); }
+
+@media (max-width: 700px) {
+  .commissioner-grid { grid-template-columns: 1fr; }
+  .commissioner-player-row { align-items: flex-start; }
+  .commissioner-player-action { align-items: flex-end; flex-direction: column; }
+}
+
+@media (max-width: 420px) {
+  .commissioner-buttons { display: grid; grid-template-columns: 1fr; }
+  .commissioner-buttons .button { width: 100%; }
+  .commissioner-player-row { flex-direction: column; }
+  .commissioner-player-action { width: 100%; align-items: stretch; }
+  .commissioner-player-action .button { width: 100%; }
+}
