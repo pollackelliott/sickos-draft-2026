@@ -4,9 +4,9 @@ A deliberately simple mobile-first web app for the Sickos League's asynchronous 
 
 ## Current status
 
-**Stage 0 — Repository foundation only.**
+**Stage 1 — Domain model and rule engine complete.**
 
-No draft engine, database, authentication, timer logic, player search, commissioner tooling, or production deployment has been implemented yet. That is intentional.
+The core draft rules now exist as framework-agnostic TypeScript with 20 rule tests. Database persistence, API endpoints, authentication, production UI, commissioner tooling, and deployment are intentionally not implemented yet.
 
 The controlling product contract is [`docs/product-spec.md`](docs/product-spec.md). Future Codex/agent work must also follow [`AGENTS.md`](AGENTS.md).
 
@@ -52,4 +52,6 @@ They are fake test data and are not intended to model the real league roster.
 
 See §32 of `docs/product-spec.md`.
 
-The next stage is **Stage 1 — Domain model and rule engine**, and it must not begin without explicit owner approval.
+Stage 1 validation details are recorded in [`docs/stage1-report.md`](docs/stage1-report.md).
+
+The next stage is **Stage 2 — Persistence and API**, and it must not begin without explicit owner approval.
