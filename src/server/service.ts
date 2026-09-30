@@ -2,10 +2,12 @@ import {
   DomainError,
   pauseDraft,
   reconcileExpiredSlots,
+  removeCompletedPick,
   replaceCompletedPick,
   resetDraft,
   resumeDraft,
   setClockDuration,
+  skipActiveSlot,
   startDraft,
   submitPick,
   submitWriteInPick,
@@ -82,15 +84,15 @@ export class DraftService {
     await this.getCurrent(nowMs);
   }
 
-  async start(nowMs: number): Promise<PersistedDraftSnapshot> {
+  async start(nowMs: number, actorOwnerId?: string): Promise<PersistedDraftSnapshot> {
     await this.reconcileBeforeMutation(nowMs);
     return this.persistWithRetry(nowMs, async (snapshot) => ({
       state: startDraft(snapshot.state, nowMs),
-      event: { type: 'DRAFT_STARTED', createdAtMs: nowMs },
+      event: { type: 'DRAFT_STARTED', actorOwnerId, createdAtMs: nowMs },
     }));
   }
 
-  async pick(input: { ownerId: string; slotId: string; playerId: string; nowMs: number }): Promise<PersistedDraftSnapshot> {
+  async pick(input: { ownerId: string; slotId: string; playerId: string; nowMs: number; actorOwnerId?: string }): Promise<PersistedDraftSnapshot> {
     await this.reconcileBeforeMutation(input.nowMs);
     const player = await this.store.getPlayer(input.playerId);
     if (!player) throw new DomainError('PLAYER_NOT_FOUND', 'That player does not exist in the player pool.');
@@ -100,7 +102,7 @@ export class DraftService {
       return {
         state: submitPick(hydrated, input),
         event: {
-          type: 'PICK_SUBMITTED', actorOwnerId: input.ownerId, slotId: input.slotId,
+          type: 'PICK_SUBMITTED', actorOwnerId: input.actorOwnerId ?? input.ownerId, slotId: input.slotId,
           playerId: input.playerId, createdAtMs: input.nowMs,
         },
       };
@@ -112,6 +114,7 @@ export class DraftService {
     slotId: string;
     nowMs: number;
     player: Omit<Player, 'source'>;
+    actorOwnerId?: string;
   }): Promise<PersistedDraftSnapshot> {
     await this.reconcileBeforeMutation(input.nowMs);
     const duplicate = await this.store.findPlayerByNameSchool(input.player.name, input.player.school);
@@ -125,7 +128,7 @@ export class DraftService {
         state: submitWriteInPick(snapshot.state, input),
         insertedPlayers: [player],
         event: {
-          type: 'WRITE_IN_PICK_SUBMITTED', actorOwnerId: input.ownerId, slotId: input.slotId,
+          type: 'WRITE_IN_PICK_SUBMITTED', actorOwnerId: input.actorOwnerId ?? input.ownerId, slotId: input.slotId,
           playerId: input.player.id, createdAtMs: input.nowMs,
         },
       }));
@@ -138,31 +141,39 @@ export class DraftService {
     }
   }
 
-  async pause(nowMs: number): Promise<PersistedDraftSnapshot> {
+  async pause(nowMs: number, actorOwnerId?: string): Promise<PersistedDraftSnapshot> {
     await this.reconcileBeforeMutation(nowMs);
     return this.persistWithRetry(nowMs, async (snapshot) => ({
       state: pauseDraft(snapshot.state, nowMs),
-      event: { type: 'DRAFT_PAUSED', createdAtMs: nowMs },
+      event: { type: 'DRAFT_PAUSED', actorOwnerId, createdAtMs: nowMs },
     }));
   }
 
-  async resume(nowMs: number): Promise<PersistedDraftSnapshot> {
+  async resume(nowMs: number, actorOwnerId?: string): Promise<PersistedDraftSnapshot> {
     await this.reconcileBeforeMutation(nowMs);
     return this.persistWithRetry(nowMs, async (snapshot) => ({
       state: resumeDraft(snapshot.state, nowMs),
-      event: { type: 'DRAFT_RESUMED', createdAtMs: nowMs },
+      event: { type: 'DRAFT_RESUMED', actorOwnerId, createdAtMs: nowMs },
     }));
   }
 
-  async changeClock(clockDurationMs: number, nowMs: number): Promise<PersistedDraftSnapshot> {
+  async skip(input: { slotId: string; nowMs: number; actorOwnerId?: string }): Promise<PersistedDraftSnapshot> {
+    await this.reconcileBeforeMutation(input.nowMs);
+    return this.persistWithRetry(input.nowMs, async (snapshot) => ({
+      state: skipActiveSlot(snapshot.state, { slotId: input.slotId, nowMs: input.nowMs }),
+      event: { type: 'ACTIVE_SLOT_SKIPPED', actorOwnerId: input.actorOwnerId, slotId: input.slotId, createdAtMs: input.nowMs },
+    }));
+  }
+
+  async changeClock(clockDurationMs: number, nowMs: number, actorOwnerId?: string): Promise<PersistedDraftSnapshot> {
     await this.reconcileBeforeMutation(nowMs);
     return this.persistWithRetry(nowMs, async (snapshot) => ({
       state: setClockDuration(snapshot.state, clockDurationMs),
-      event: { type: 'CLOCK_DURATION_CHANGED', createdAtMs: nowMs, details: { clockDurationMs } },
+      event: { type: 'CLOCK_DURATION_CHANGED', actorOwnerId, createdAtMs: nowMs, details: { clockDurationMs } },
     }));
   }
 
-  async correctPick(input: { slotId: string; playerId: string; nowMs: number }): Promise<PersistedDraftSnapshot> {
+  async correctPick(input: { slotId: string; playerId: string; nowMs: number; actorOwnerId?: string }): Promise<PersistedDraftSnapshot> {
     await this.reconcileBeforeMutation(input.nowMs);
     const player = await this.store.getPlayer(input.playerId);
     if (!player) throw new DomainError('PLAYER_NOT_FOUND', 'That player does not exist in the player pool.');
@@ -172,16 +183,24 @@ export class DraftService {
         slotId: input.slotId,
         playerId: input.playerId,
       }),
-      event: { type: 'PICK_CORRECTED', slotId: input.slotId, playerId: input.playerId, createdAtMs: input.nowMs },
+      event: { type: 'PICK_CORRECTED', actorOwnerId: input.actorOwnerId, slotId: input.slotId, playerId: input.playerId, createdAtMs: input.nowMs },
     }));
   }
 
-  async reset(nowMs: number): Promise<PersistedDraftSnapshot> {
+  async removePick(input: { slotId: string; nowMs: number; actorOwnerId?: string }): Promise<PersistedDraftSnapshot> {
+    await this.reconcileBeforeMutation(input.nowMs);
+    return this.persistWithRetry(input.nowMs, async (snapshot) => ({
+      state: removeCompletedPick(snapshot.state, input.slotId),
+      event: { type: 'PICK_REMOVED', actorOwnerId: input.actorOwnerId, slotId: input.slotId, createdAtMs: input.nowMs },
+    }));
+  }
+
+  async reset(nowMs: number, actorOwnerId?: string): Promise<PersistedDraftSnapshot> {
     await this.reconcileBeforeMutation(nowMs);
     return this.persistWithRetry(nowMs, async (snapshot) => ({
       state: resetDraft(snapshot.state),
       deleteWriteIns: true,
-      event: { type: 'DRAFT_RESET', createdAtMs: nowMs },
+      event: { type: 'DRAFT_RESET', actorOwnerId, createdAtMs: nowMs },
     }));
   }
 }
