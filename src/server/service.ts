@@ -120,14 +120,22 @@ export class DraftService {
     }
     const player: Player = { ...input.player, source: 'WRITE_IN' };
 
-    return this.persistWithRetry(input.nowMs, async (snapshot) => ({
-      state: submitWriteInPick(snapshot.state, input),
-      insertedPlayers: [player],
-      event: {
-        type: 'WRITE_IN_PICK_SUBMITTED', actorOwnerId: input.ownerId, slotId: input.slotId,
-        playerId: input.player.id, createdAtMs: input.nowMs,
-      },
-    }));
+    try {
+      return await this.persistWithRetry(input.nowMs, async (snapshot) => ({
+        state: submitWriteInPick(snapshot.state, input),
+        insertedPlayers: [player],
+        event: {
+          type: 'WRITE_IN_PICK_SUBMITTED', actorOwnerId: input.ownerId, slotId: input.slotId,
+          playerId: input.player.id, createdAtMs: input.nowMs,
+        },
+      }));
+    } catch (error) {
+      const duplicateAfterConflict = await this.store.findPlayerByNameSchool(input.player.name, input.player.school);
+      if (duplicateAfterConflict) {
+        throw new DomainError('WRITE_IN_DUPLICATE', 'That player already exists in the player pool. Select the existing player instead.');
+      }
+      throw error;
+    }
   }
 
   async pause(nowMs: number): Promise<PersistedDraftSnapshot> {

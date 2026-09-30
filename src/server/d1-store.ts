@@ -195,6 +195,40 @@ export class D1DraftStore {
     }));
   }
 
+  async findOwnerByCode(code: string): Promise<OwnerRecord | undefined> {
+    const normalized = code.trim().toUpperCase();
+    if (!normalized) return undefined;
+    const row = await this.db.prepare(
+      `SELECT id, name, draft_position, code, is_commissioner
+         FROM owners WHERE UPPER(code) = ? LIMIT 1`,
+    ).bind(normalized).first<OwnerRow>();
+    return row ? {
+      id: row.id,
+      name: row.name,
+      draftPosition: row.draft_position,
+      code: row.code,
+      isCommissioner: row.is_commissioner === 1,
+    } : undefined;
+  }
+
+  async playerFilterOptions(conference?: string): Promise<{ conferences: string[]; schools: string[] }> {
+    const conferenceRows = await this.db.prepare(
+      'SELECT DISTINCT conference FROM players ORDER BY conference COLLATE NOCASE',
+    ).all<{ conference: string }>();
+
+    const schoolStatement = conference?.trim()
+      ? this.db.prepare(
+          'SELECT DISTINCT school FROM players WHERE conference = ? ORDER BY school COLLATE NOCASE',
+        ).bind(conference.trim())
+      : this.db.prepare('SELECT DISTINCT school FROM players ORDER BY school COLLATE NOCASE');
+    const schoolRows = await schoolStatement.all<{ school: string }>();
+
+    return {
+      conferences: requireRows(conferenceRows).map((row) => row.conference),
+      schools: requireRows(schoolRows).map((row) => row.school),
+    };
+  }
+
   async searchPlayers(query: PlayerSearchQuery): Promise<PlayerSearchResult> {
     const clauses: string[] = [];
     const values: unknown[] = [];

@@ -70,3 +70,13 @@ Pure presentation derivation lives in `src/ui/view-model.ts`. Board layout, rece
 `src/ui/demo-data.ts` builds a deterministic but live-looking draft snapshot from the Stage 1 domain engine. It intentionally includes an owed pick at the end of Round 1 and the same owner on the clock at the start of Round 2, making the asynchronous/backfill model visible before Stage 4 adds drafting.
 
 The visual language follows the existing Sickos fantasy site: tan floor-inspired background, dark header, orange accent, compact typography, and minimal ornamentation. The draft app departs from the existing narrow layout on larger screens because the board benefits from desktop width; on phones, the board remains horizontally scrollable with a sticky Round column.
+
+## Stage 4 identity and drafting decision
+
+Owner identity deliberately remains simple: a short human-readable code is stored with each owner and supplied in the `x-league-code` header for authenticated requests. Codes are normalized case-insensitively and the database prevents case-only duplicates. The browser remembers the normalized code in local storage.
+
+The server always resolves the owner from that code and ignores any attempted browser-supplied owner identity. Public API responses never expose owner codes. This is intentionally lightweight authentication for a private, low-stakes league with no sensitive information.
+
+The Stage 4 mutation surface is intentionally narrow: ordinary owner picks and write-ins only. All commissioner powers remain unrouted until Stage 5.
+
+The Players screen searches the player table through server queries and retrieves conference/school filter options separately. It does not load the complete 5,000–6,000-player pool into draft state.

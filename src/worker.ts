@@ -1,9 +1,9 @@
-import { handleReadApi, type WorkerEnv } from './server/read-api.js';
+import { handleApi, type WorkerEnv } from './server/api.js';
 
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
     try {
-      const response = await handleReadApi(request, env);
+      const response = await handleApi(request, env);
       return response ?? new Response('Not found', { status: 404 });
     } catch (error) {
       console.error(error);

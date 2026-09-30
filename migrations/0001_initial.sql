@@ -8,6 +8,8 @@ CREATE TABLE owners (
   is_commissioner INTEGER NOT NULL DEFAULT 0 CHECK (is_commissioner IN (0, 1))
 );
 
+CREATE UNIQUE INDEX owners_code_upper_unique ON owners(UPPER(code));
+
 CREATE TABLE players (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
