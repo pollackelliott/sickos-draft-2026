@@ -4,11 +4,16 @@ A deliberately simple mobile-first web app for the Sickos League's asynchronous 
 
 ## Current status
 
-**Stage 2 — Persistence and API complete.**
+**Stage 3 — Read-only application complete.**
 
-The draft rule engine is backed by a D1-compatible SQLite persistence layer with transactional revision protection, database constraints, durable clock reconciliation, an internal mutation service, and read-only draft/player HTTP endpoints.
+The project now has:
 
-The visible application is still only the foundation shell. Owner-code login, actual drafting controls, commissioner screens, real league imports, and deployment have intentionally not been built yet.
+- tested draft rules;
+- D1-compatible durable persistence and concurrency protection;
+- read-only Draft, Players, Teams, and Rules screens using deterministic demo data;
+- a mobile-first Sickos visual style with a horizontally scrollable draft board.
+
+Owner-code login, actual drafting controls, commissioner screens, real league imports, and production deployment have intentionally not been built yet.
 
 The controlling product contract is [`docs/product-spec.md`](docs/product-spec.md). Future Codex/agent work must also follow [`AGENTS.md`](AGENTS.md).
 
@@ -21,7 +26,7 @@ The controlling product contract is [`docs/product-spec.md`](docs/product-spec.m
 - plain CSS
 - Cloudflare D1-compatible SQLite persistence
 
-The draft-domain layer under `src/domain/` remains independent of React and the persistence provider. Persistence/server code lives under `src/server/`.
+The draft-domain layer under `src/domain/` remains independent of React and the persistence provider. Persistence/server code lives under `src/server/`. Read-only browser presentation helpers live under `src/ui/`.
 
 ## Local development
 
@@ -47,15 +52,16 @@ Small deterministic development files live in:
 - `data/demo/owners.csv`
 - `data/demo/players.csv`
 
-They are fake test data and are not intended to model the real league roster.
+The Stage 3 browser demo uses equivalent deterministic in-code fixtures so it can exercise draft states without requiring a deployed database.
 
 ## Durable stage reports
 
 - [`docs/stage1-report.md`](docs/stage1-report.md)
 - [`docs/stage2-report.md`](docs/stage2-report.md)
+- [`docs/stage3-report.md`](docs/stage3-report.md)
 
 ## Development stages
 
 See §32 of `docs/product-spec.md`.
 
-The next stage is **Stage 3 — Read-only application**, and it must not begin without explicit owner approval.
+The next stage is **Stage 4 — Identity and drafting**, and it must not begin without explicit owner approval.
