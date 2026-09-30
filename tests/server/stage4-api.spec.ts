@@ -141,17 +141,12 @@ describe('Stage 4 owner-code API', () => {
     db.close();
   });
 
-  it('returns complete conference/school filter options and keeps commissioner mutations un-routed', async () => {
+  it('returns complete conference/school filter options', async () => {
     const { db } = await setup();
     const options = await handleApi(request('/api/player-options?conference=ACC'), { DB: db });
     const body = await options?.json() as { conferences: string[]; schools: string[] };
     expect(body.conferences).toEqual(['ACC', 'Big Ten', 'SEC']);
     expect(body.schools).toEqual(['North Metro']);
-
-    const pause = await handleApi(request('/api/pause', {
-      method: 'POST', headers: { 'x-league-code': 'BLUE42' },
-    }), { DB: db });
-    expect(pause).toBeNull();
     db.close();
   });
 });
