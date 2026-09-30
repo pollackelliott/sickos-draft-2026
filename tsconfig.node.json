@@ -17,6 +17,12 @@
   },
   "include": [
     "vite.config.ts",
-    "tests"
+    "tests",
+    "src/domain/**/*.ts",
+    "src/server/**/*.ts",
+    "src/project.ts",
+    "src/ui/draft-actions.ts",
+    "src/ui/demo-data.ts",
+    "src/ui/view-model.ts"
   ]
 }
