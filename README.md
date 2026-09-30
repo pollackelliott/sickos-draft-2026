@@ -4,19 +4,19 @@ A deliberately simple mobile-first web app for the Sickos League's asynchronous 
 
 ## Current status
 
-**Stage 4 — Identity and drafting complete.**
+**Stage 5 — Commissioner tools complete.**
 
 The project now has:
 
-- tested draft rules;
+- tested snake-draft, timing, owed-pick, and conference rules;
 - D1-compatible durable persistence and concurrency protection;
 - Draft, Players, Teams, and Rules screens;
 - short owner-code identity remembered on the owner's device;
-- server-authorized normal picks and owed-pick backfills;
-- player confirmation and write-ins;
+- server-authorized normal picks, owed-pick backfills, player confirmation, and write-ins;
+- commissioner-only controls for start, pause/resume, manual skip, proxy picks, corrections/removals, future clock changes, reset, and CSV export;
 - mobile-first Sickos styling.
 
-Commissioner controls, real league CSV imports, and production deployment have intentionally not been built yet.
+Real league CSV imports and production deployment have intentionally not been built yet.
 
 The controlling product contract is [`docs/product-spec.md`](docs/product-spec.md). Future Codex/agent work must also follow [`AGENTS.md`](AGENTS.md).
 
@@ -52,9 +52,11 @@ npm run build
 
 Owners use short human-readable league codes. The code is remembered in browser local storage and is sent only when identity or drafting actions require it. Public draft responses never expose owner codes.
 
+The commissioner uses the same owner-code flow. Commissioner routes additionally require the authenticated owner to carry the commissioner flag on the server.
+
 ## Demo fixtures
 
-Small deterministic development fixtures remain in the repository for tests and design validation. Stage 4's application UI now targets the real API contract rather than using demo state as its runtime source.
+Small deterministic development fixtures remain in the repository for tests and design validation. The application UI targets the real API contract rather than using demo state as its runtime source.
 
 ## Durable stage reports
 
@@ -62,9 +64,10 @@ Small deterministic development fixtures remain in the repository for tests and 
 - [`docs/stage2-report.md`](docs/stage2-report.md)
 - [`docs/stage3-report.md`](docs/stage3-report.md)
 - [`docs/stage4-report.md`](docs/stage4-report.md)
+- [`docs/stage5-report.md`](docs/stage5-report.md)
 
 ## Development stages
 
 See §32 of `docs/product-spec.md`.
 
-The next stage is **Stage 5 — Commissioner tools**, and it must not begin without explicit owner approval.
+The next stage is **Stage 6 — Imports and real data**, and it must not begin without explicit owner approval.

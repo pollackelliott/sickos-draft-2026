@@ -1,9 +1,8 @@
-name: Stage 5 validation
+name: Repository validation
 
 on:
   push:
-    branches:
-      - stage5-commissioner-tools
+  pull_request:
 
 jobs:
   validate:

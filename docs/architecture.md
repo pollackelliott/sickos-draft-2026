@@ -80,3 +80,27 @@ The server always resolves the owner from that code and ignores any attempted br
 The Stage 4 mutation surface is intentionally narrow: ordinary owner picks and write-ins only. All commissioner powers remain unrouted until Stage 5.
 
 The Players screen searches the player table through server queries and retrieves conference/school filter options separately. It does not load the complete 5,000–6,000-player pool into draft state.
+
+
+## Stage 5 commissioner decision
+
+Commissioner access reuses the normal owner-code identity model. The server resolves the owner from the code and separately requires `isCommissioner`; hiding the Commissioner tab in React is convenience only and is never the authorization boundary.
+
+Commissioner mutations continue through the existing `DraftService`, revision-claim transaction model, and Stage 1 domain rules. There is no parallel “admin database edit” path.
+
+The Stage 5 operational semantics are:
+
+- starting the draft activates the first scheduled slot with a full configured clock;
+- pause/resume preserves the remaining time on the current clock;
+- clock-duration changes affect future clocks only;
+- manually skipping the current slot converts that exact slot to `OWED` and starts the next scheduled slot with a full clock;
+- proxy picks identify the target owner and slot explicitly, then obey the same player, conference, slot, and oldest-owed rules as ordinary picks;
+- replacing a completed pick leaves unrelated later slots and the current clock unchanged while re-validating player and conference uniqueness;
+- removing a completed pick converts that immutable original slot to `OWED`; unrelated later selections stay in place;
+- a removal from an otherwise complete draft reopens the lifecycle as `IN_PROGRESS` until the owed slot is filled;
+- reset restores the original unstarted slot schedule, clears selections/pause state, and removes write-in players;
+- CSV export is ordered by immutable draft slot, so backfills retain their original round and overall-pick positions.
+
+The Commissioner screen is deliberately a compact operational page rather than a generalized admin dashboard. Destructive or unusual actions require explicit confirmation in the UI, and full reset additionally requires typing `RESET`.
+
+Stage 5 also corrected the Node TypeScript project include set so the repository's canonical `npm run typecheck` and `npm run build` commands can validate the source files imported by the test suite on a clean machine.

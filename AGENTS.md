@@ -18,10 +18,10 @@ This repository is intentionally developed in bounded stages. `docs/product-spec
 12. Do not scrape or infer player metadata. Imported league data is authoritative.
 13. Each implementation stage must end with tests and a concise status report before the next stage begins.
 14. If a requirement is ambiguous and materially affects data integrity, stop that specific change rather than inventing league rules.
-15. Commissioner mutation routes remain out of scope until Stage 5 is explicitly authorized.
+15. Stage 5 commissioner mutations must require server-side commissioner identity and must still pass through the controlling domain and persistence rules.
 
 ## Current authorized state
 
-Stage 4 — Identity and drafting — COMPLETE.
+Stage 5 — Commissioner tools — COMPLETE.
 
-The next stage, Stage 5 — Commissioner tools, requires explicit owner approval.
+The next stage, Stage 6 — Imports and real data, requires explicit owner approval.
