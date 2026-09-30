@@ -8,9 +8,10 @@ import { DraftPage } from './ui/draft-page';
 import { PlayersPage } from './ui/players-page';
 import { TeamsPage } from './ui/teams-page';
 import { RulesPage } from './ui/rules-page';
+import { CommissionerPage } from './ui/commissioner-page';
 
-type Page = 'Draft' | 'Players' | 'Teams' | 'Rules';
-const pages: Page[] = ['Draft', 'Players', 'Teams', 'Rules'];
+type Page = 'Draft' | 'Players' | 'Teams' | 'Rules' | 'Commissioner';
+const publicPages: Page[] = ['Draft', 'Players', 'Teams', 'Rules'];
 const api = new DraftApiClient();
 
 export function App() {
@@ -64,8 +65,15 @@ export function App() {
     clearStoredOwnerCode(window.localStorage);
     setCode(null);
     setOwner(null);
+    setPage('Draft');
     setIdentityOpen(true);
   }
+
+  const pages = owner?.isCommissioner ? [...publicPages, 'Commissioner' as const] : publicPages;
+
+  useEffect(() => {
+    if (page === 'Commissioner' && !owner?.isCommissioner) setPage('Draft');
+  }, [owner?.isCommissioner, page]);
 
   return (
     <div className="app-shell">
@@ -85,6 +93,9 @@ export function App() {
         {draft && page === 'Players' && <PlayersPage draft={draft} owner={owner} code={code} onDraftChanged={(next) => { setDraft(next); setPage('Draft'); }} />}
         {draft && page === 'Teams' && <TeamsPage draft={draft} />}
         {draft && page === 'Rules' && <RulesPage draft={draft} />}
+        {draft && page === 'Commissioner' && owner?.isCommissioner && code && (
+          <CommissionerPage draft={draft} code={code} onDraftChanged={setDraft} />
+        )}
       </main>
 
       <IdentityModal open={identityOpen} onClose={() => setIdentityOpen(false)} onSuccess={acceptIdentity} />
