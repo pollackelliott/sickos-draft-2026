@@ -3,6 +3,7 @@ import { authenticateOwner } from './auth.js';
 import { D1DraftStore } from './d1-store.js';
 import { DraftService } from './service.js';
 import type { D1Database } from './d1-types.js';
+import type { OwnerRecord } from './store-types.js';
 
 export interface WorkerEnv {
   DB: D1Database;
@@ -64,6 +65,52 @@ function requiredString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+function requiredPositiveNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
+}
+
+async function requireCommissioner(
+  store: D1DraftStore,
+  request: Request,
+): Promise<{ owner: OwnerRecord | null; response: Response | null }> {
+  const owner = await authenticateOwner(store, request);
+  if (!owner) {
+    return { owner: null, response: json({ error: 'Enter a valid commissioner league code.' }, { status: 401 }) };
+  }
+  if (!owner.isCommissioner) {
+    return { owner: null, response: json({ error: 'Commissioner access required.' }, { status: 403 }) };
+  }
+  return { owner, response: null };
+}
+
+function csvCell(value: string | number): string {
+  const text = String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function draftCsv(state: DraftState): string {
+  const owners = new Map(state.owners.map((owner) => [owner.id, owner]));
+  const players = new Map(state.players.map((player) => [player.id, player]));
+  const rows = [['Overall Pick', 'Round', 'Player', 'User', 'Team', 'Conference'].join(',')];
+
+  for (const slot of [...state.slots].sort((a, b) => a.overallPick - b.overallPick)) {
+    if (slot.status !== 'COMPLETE' || !slot.playerId) continue;
+    const owner = owners.get(slot.ownerId);
+    const player = players.get(slot.playerId);
+    if (!owner || !player) continue;
+    rows.push([
+      slot.overallPick,
+      slot.round,
+      player.name,
+      owner.name,
+      player.school,
+      player.conference,
+    ].map(csvCell).join(','));
+  }
+
+  return `${rows.join('\r\n')}\r\n`;
+}
+
 function domainErrorResponse(error: DomainError): Response {
   const status = error.code === 'PLAYER_NOT_FOUND' ? 404 : 409;
   return json({ error: error.message, code: error.code }, { status });
@@ -105,6 +152,105 @@ export async function handleApi(request: Request, env: WorkerEnv): Promise<Respo
       const owner = await authenticateOwner(store, request);
       if (!owner) return json({ error: 'Invalid league code.' }, { status: 401 });
       return json({ owner: publicOwner(owner) });
+    }
+
+    if (url.pathname.startsWith('/api/commissioner/')) {
+      const auth = await requireCommissioner(store, request);
+      if (auth.response) return auth.response;
+      const commissioner = auth.owner!;
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/start') {
+        const snapshot = await service.start(Date.now(), commissioner.id);
+        return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/pause') {
+        const snapshot = await service.pause(Date.now(), commissioner.id);
+        return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/resume') {
+        const snapshot = await service.resume(Date.now(), commissioner.id);
+        return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/skip') {
+        const body = await bodyJson<{ slotId?: unknown }>(request);
+        const slotId = requiredString(body?.slotId);
+        if (!slotId) return json({ error: 'The active draft slot is required.' }, { status: 400 });
+        const snapshot = await service.skip({ slotId, nowMs: Date.now(), actorOwnerId: commissioner.id });
+        return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/clock') {
+        const body = await bodyJson<{ clockDurationMs?: unknown }>(request);
+        const clockDurationMs = requiredPositiveNumber(body?.clockDurationMs);
+        if (!clockDurationMs) return json({ error: 'Clock duration must be greater than zero.' }, { status: 400 });
+        const snapshot = await service.changeClock(clockDurationMs, Date.now(), commissioner.id);
+        return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/proxy-pick') {
+        const body = await bodyJson<{ ownerId?: unknown; slotId?: unknown; playerId?: unknown }>(request);
+        const ownerId = requiredString(body?.ownerId);
+        const slotId = requiredString(body?.slotId);
+        const playerId = requiredString(body?.playerId);
+        if (!ownerId || !slotId || !playerId) {
+          return json({ error: 'Owner, draft slot, and player are required.' }, { status: 400 });
+        }
+        const snapshot = await service.pick({
+          ownerId,
+          slotId,
+          playerId,
+          nowMs: Date.now(),
+          actorOwnerId: commissioner.id,
+        });
+        return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/correct-pick') {
+        const body = await bodyJson<{ slotId?: unknown; playerId?: unknown }>(request);
+        const slotId = requiredString(body?.slotId);
+        const playerId = requiredString(body?.playerId);
+        if (!slotId || !playerId) return json({ error: 'Draft slot and replacement player are required.' }, { status: 400 });
+        const snapshot = await service.correctPick({
+          slotId,
+          playerId,
+          nowMs: Date.now(),
+          actorOwnerId: commissioner.id,
+        });
+        return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/remove-pick') {
+        const body = await bodyJson<{ slotId?: unknown }>(request);
+        const slotId = requiredString(body?.slotId);
+        if (!slotId) return json({ error: 'Draft slot is required.' }, { status: 400 });
+        const snapshot = await service.removePick({ slotId, nowMs: Date.now(), actorOwnerId: commissioner.id });
+        return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/reset') {
+        const body = await bodyJson<{ confirmation?: unknown }>(request);
+        if (body?.confirmation !== 'RESET') {
+          return json({ error: 'Type RESET to confirm a full draft reset.' }, { status: 400 });
+        }
+        const snapshot = await service.reset(Date.now(), commissioner.id);
+        return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/commissioner/export') {
+        const snapshot = await service.getCurrent(Date.now());
+        return new Response(draftCsv(snapshot.state), {
+          status: 200,
+          headers: {
+            'content-type': 'text/csv; charset=utf-8',
+            'content-disposition': 'attachment; filename="sickos-draft-2026.csv"',
+          },
+        });
+      }
+
+      return null;
     }
 
     if (request.method === 'POST' && url.pathname === '/api/pick') {
