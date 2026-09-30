@@ -328,6 +328,29 @@ export function setClockDuration(state: DraftState, clockDurationMs: number): Dr
   return next;
 }
 
+export function skipActiveSlot(
+  state: DraftState,
+  input: { slotId: string; nowMs: number },
+): DraftState {
+  const reconciled = reconcileExpiredSlots(state, input.nowMs);
+  requireDraftCanAcceptPick(reconciled);
+  if (!reconciled.activeSlotId || reconciled.activeSlotId !== input.slotId) {
+    throw new DomainError('SLOT_NOT_AVAILABLE', 'The active draft slot changed. Refresh and try again.');
+  }
+
+  const next = cloneState(reconciled);
+  const active = getActiveSlot(next);
+  if (!active || active.status !== 'ON_CLOCK') {
+    throw new DomainError('SLOT_NOT_AVAILABLE', 'There is no active draft slot to skip.');
+  }
+
+  active.status = 'OWED';
+  next.activeSlotId = null;
+  next.activeDeadlineMs = null;
+  activateNextFuture(next, input.nowMs);
+  return next;
+}
+
 export function replaceCompletedPick(
   state: DraftState,
   input: { slotId: string; playerId: string },
@@ -344,6 +367,32 @@ export function replaceCompletedPick(
   const next = cloneState(state);
   const target = next.slots.find((candidate) => candidate.id === input.slotId)!;
   target.playerId = input.playerId;
+  return next;
+}
+
+export function removeCompletedPick(state: DraftState, slotId: string): DraftState {
+  const slot = state.slots.find((candidate) => candidate.id === slotId);
+  if (!slot) {
+    throw new DomainError('SLOT_NOT_FOUND', 'That draft slot does not exist.');
+  }
+  if (slot.status !== 'COMPLETE') {
+    throw new DomainError('SLOT_NOT_AVAILABLE', 'Only a completed pick can be removed.');
+  }
+
+  const next = cloneState(state);
+  const target = next.slots.find((candidate) => candidate.id === slotId)!;
+  target.status = 'OWED';
+  target.playerId = null;
+  target.selectedAtMs = null;
+  target.selectionKind = null;
+
+  if (next.lifecycle === 'COMPLETE') {
+    next.lifecycle = 'IN_PROGRESS';
+    next.completedAtMs = null;
+    next.paused = false;
+    next.pausedRemainingMs = null;
+  }
+
   return next;
 }
 
