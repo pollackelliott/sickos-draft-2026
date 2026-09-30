@@ -4,9 +4,11 @@ A deliberately simple mobile-first web app for the Sickos League's asynchronous 
 
 ## Current status
 
-**Stage 1 — Domain model and rule engine complete.**
+**Stage 2 — Persistence and API complete.**
 
-The core draft rules now exist as framework-agnostic TypeScript with 20 rule tests. Database persistence, API endpoints, authentication, production UI, commissioner tooling, and deployment are intentionally not implemented yet.
+The draft rule engine is backed by a D1-compatible SQLite persistence layer with transactional revision protection, database constraints, durable clock reconciliation, an internal mutation service, and read-only draft/player HTTP endpoints.
+
+The visible application is still only the foundation shell. Owner-code login, actual drafting controls, commissioner screens, real league imports, and deployment have intentionally not been built yet.
 
 The controlling product contract is [`docs/product-spec.md`](docs/product-spec.md). Future Codex/agent work must also follow [`AGENTS.md`](AGENTS.md).
 
@@ -17,10 +19,9 @@ The controlling product contract is [`docs/product-spec.md`](docs/product-spec.m
 - TypeScript
 - Vitest
 - plain CSS
+- Cloudflare D1-compatible SQLite persistence
 
-The draft-domain layer will live under `src/domain/` and remain independent of React and the eventual hosting/database provider.
-
-Cloudflare Workers + D1 is the leading deployment candidate, but persistence and deployment decisions are intentionally deferred until their implementation stages.
+The draft-domain layer under `src/domain/` remains independent of React and the persistence provider. Persistence/server code lives under `src/server/`.
 
 ## Local development
 
@@ -48,10 +49,13 @@ Small deterministic development files live in:
 
 They are fake test data and are not intended to model the real league roster.
 
+## Durable stage reports
+
+- [`docs/stage1-report.md`](docs/stage1-report.md)
+- [`docs/stage2-report.md`](docs/stage2-report.md)
+
 ## Development stages
 
 See §32 of `docs/product-spec.md`.
 
-Stage 1 validation details are recorded in [`docs/stage1-report.md`](docs/stage1-report.md).
-
-The next stage is **Stage 2 — Persistence and API**, and it must not begin without explicit owner approval.
+The next stage is **Stage 3 — Read-only application**, and it must not begin without explicit owner approval.
