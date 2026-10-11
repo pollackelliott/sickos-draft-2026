@@ -21,6 +21,7 @@
     "scripts/stage8-mock.ts",
     "tests",
     "src/domain/**/*.ts",
+    "src/api/**/*.ts",
     "src/server/**/*.ts",
     "src/project.ts",
     "src/ui/draft-actions.ts",
