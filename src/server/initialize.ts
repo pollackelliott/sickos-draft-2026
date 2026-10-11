@@ -1,5 +1,6 @@
 import { createDraftState, normalizeIdentityPart, type Player } from '../domain/index.js';
 import type { D1Database, D1PreparedStatement } from './d1-types.js';
+import { playerSortKey } from './player-sort.js';
 import { ACTIVE_DRAFT_ID, type OwnerRecord } from './store-types.js';
 
 export async function initializeDraft(
@@ -44,8 +45,8 @@ export async function initializeDraft(
     statements.push(
       db.prepare(
         `INSERT INTO players
-         (id, name, school, conference, normalized_name, normalized_school, source)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (id, name, school, conference, normalized_name, normalized_school, sort_name, source)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         player.id,
         player.name,
@@ -53,6 +54,7 @@ export async function initializeDraft(
         player.conference,
         normalizeIdentityPart(player.name),
         normalizeIdentityPart(player.school),
+        playerSortKey(player.name),
         player.source,
       ),
     );
