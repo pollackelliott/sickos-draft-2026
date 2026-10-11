@@ -18,6 +18,9 @@ describe('Stage 7 deployment bootstrap', () => {
     const bootstrapSql = readFileSync('.wrangler/bootstrap.sql', 'utf8');
     expect(bootstrapSql).not.toContain('ELBOW59');
     expect(bootstrapSql).toContain('TEST05');
+    expect(bootstrapSql).not.toMatch(/\bBEGIN\b/i);
+    expect(bootstrapSql).not.toMatch(/\bCOMMIT\b/i);
+    expect(bootstrapSql).not.toMatch(/\bSAVEPOINT\b/i);
 
     const db = new DatabaseSync(':memory:');
     db.exec('PRAGMA foreign_keys = ON;');
