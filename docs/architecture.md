@@ -104,3 +104,24 @@ The Stage 5 operational semantics are:
 The Commissioner screen is deliberately a compact operational page rather than a generalized admin dashboard. Destructive or unusual actions require explicit confirmation in the UI, and full reset additionally requires typing `RESET`.
 
 Stage 5 also corrected the Node TypeScript project include set so the repository's canonical `npm run typecheck` and `npm run build` commands can validate the source files imported by the test suite on a clean machine.
+
+
+## Stage 6B player-universe ingestion and refresh
+
+The reconciled player universe now has a dedicated server-side ingestion path rather than being loaded through draft initialization.
+
+Durable identity uses the application's immutable internal player ID plus ESPN ID when known. `Name + School` remains a human-facing/reconciliation identity and a database uniqueness guard, but it is not allowed to silently replace a different durable identity.
+
+Player-universe refresh is intentionally replacement-oriented for unreferenced imported players:
+
+- the complete incoming CSV is validated before mutation;
+- all writes execute in one transactional D1 batch;
+- unreferenced imported players may be added, updated, or removed;
+- write-ins are always preserved;
+- any imported player referenced by a current slot or historical draft event is frozen and preserved, even if absent or changed in the refreshed file;
+- ESPN-ID remaps and imported identity collisions fail closed rather than guessing;
+- exact incoming Name + School collisions with an existing write-in preserve the write-in and skip the incoming duplicate.
+
+A refresh uses a temporary normalized-identity namespace inside the same transaction before applying the new rows. This permits legitimate name/school changes without making correctness depend on row ordering. Bulk inserts are grouped at eight rows per statement so the canonical 12 bound values per row remain below D1's per-query bound-parameter ceiling.
+
+The commissioner-only HTTP route accepts canonical CSV directly. A browser upload surface is deliberately deferred; Stage 6B establishes and tests the safe server operation first.
