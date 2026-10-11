@@ -15,7 +15,7 @@ Sickos Draft 2026 is a deliberately simple web application for conducting one pr
 
 ## 3. Conference rule
 
-Each fantasy roster may contain no more than one player from any conference. The conference value supplied in the imported player file is authoritative and frozen for the draft. The rule applies equally to normal picks, owed-pick backfills, write-ins, and commissioner-entered selections, and must be enforced server-side.
+Each fantasy roster may contain no more than one player from any conference. The conference value in the reconciled player universe is authoritative for eligibility. Once a player is drafted, that selected player's school/conference identity is frozen for the draft. A later player-universe refresh may update an undrafted player's roster metadata, including school/conference, but must never silently rewrite a completed selection. The rule applies equally to normal picks, owed-pick backfills, write-ins, and commissioner-entered selections, and must be enforced server-side.
 
 ## 4. Asynchronous clock
 
@@ -77,17 +77,17 @@ Any correction must leave roster conference rules valid.
 
 ## 12. Player pool
 
-The commissioner supplies `players.csv`, normally 5,000–6,000 rows. Required columns:
+The commissioner supplies one or more authoritative roster/player-universe files, normally producing a reconciled pool of roughly 5,000–6,500 players. The canonical import requires at least:
 
 `Name,School,Conference`
 
-Optional fields such as Year, Position, and Height may be preserved when supplied but are not required or sourced externally. Every imported player receives an internal unique ID. Player names need not be unique; Name + School is sufficient human-facing identification.
+Optional durable external identifiers such as ESPN player ID may be preserved, along with lightweight roster fields such as Year, Position, and Height when supplied. Every player receives an immutable application internal ID. Player names need not be unique; Name + School is sufficient human-facing identification but is not the permanent identity key.
 
-The pool is fixed once the draft starts except for write-ins.
+Player-universe refreshes are allowed before and during the draft. A refresh must preserve internal IDs when identity is known, add newly discovered players, preserve write-ins, and never silently merge ambiguous identities. During an active draft, already-drafted player records are immutable; undrafted player roster metadata may be refreshed.
 
 ## 13. Write-ins
 
-Any owner making a legitimate selection may write in a missing player by providing Player Name, School, and Conference. Before acceptance, an exact normalized Name + School match against the imported pool must be checked. If a match exists, the existing player must be used instead. Write-ins obey all normal conference and availability rules.
+Any owner making a legitimate selection may write in a missing player by providing Player Name, School, and Conference. Before acceptance, known durable identifiers should be honored when available and an exact normalized Name + School match against the imported pool must be checked. If a match exists, the existing player must be used instead. Write-ins receive immutable internal IDs, survive later player-universe refreshes, and obey all normal conference and availability rules.
 
 ## 14. Player browsing and selection
 
