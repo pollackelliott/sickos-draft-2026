@@ -1,0 +1,32 @@
+name,torvik_school,torvik_conference_raw,canonical_conference,torvik_year,torvik_player_id,torvik_same_name_rows,espn_same_name_candidates,espn_candidate_ids,espn_candidate_schools,espn_candidate_classes,review_reason
+Nate Johnson,Alabama A&M,SWAC,SWAC,Jr,,1,2,5241614 | 4898278,Detroit Mercy | Kansas State,SO | SR,ESPN_AMBIGUOUS_NAME_2
+Daniel Culberson,Cal State Northridge,Big West,Big West,Jr,,2,0,,,,TORVIK_DUPLICATE_NAME_2
+Josh Smith,Duquesne,Atlantic 10,Atlantic 10,Sr,,1,2,4700859 | 5179291,Liberty | West Georgia,SR | JR,ESPN_AMBIGUOUS_NAME_2
+Daniel Culberson,Eastern Michigan,MAC,MAC,Jr,,2,0,,,,TORVIK_DUPLICATE_NAME_2
+Binael Basil,East Texas A&M,Southland,Southland,Jr,,2,1,5317320,Wagner,SO,TORVIK_DUPLICATE_NAME_2
+Daniel Michelini-Jackson,East Texas A&M,Southland,Southland,Sr,,2,1,5314705,Texas A&M-Corpus Christi,JR,TORVIK_DUPLICATE_NAME_2
+Damarion Winston,East Texas A&M,Southland,Southland,Jr,,2,0,,,,TORVIK_DUPLICATE_NAME_2
+AJ Smith,Georgia State,Sun Belt,Sun Belt,Jr,,1,2,5107626 | 5107357,Bradley | Temple,SR | SR,ESPN_AMBIGUOUS_NAME_2
+Caleb Williams,Jacksonville,Atlantic Sun,Atlantic Sun,Jr,,3,3,5319273 | 5061569 | 5243035,Auburn | Georgetown | Lafayette,FR | SO | FR,TORVIK_DUPLICATE_NAME_3;ESPN_AMBIGUOUS_NAME_3
+Jayden Williams,Jackson State,SWAC,SWAC,Jr,,3,4,5242553 | 5106241 | 5312448 | 4869785,Bucknell | Dartmouth | Georgia Southern | Incarnate Word,SO | SR | FR | SO,TORVIK_DUPLICATE_NAME_3;ESPN_AMBIGUOUS_NAME_4
+Cameron Williams,Kent State,MAC,MAC,Sr,,2,2,5210407 | 5314723,Duke | Portland,FR | JR,TORVIK_DUPLICATE_NAME_2;ESPN_AMBIGUOUS_NAME_2
+Will Sydnor,Manhattan,MAAC,MAAC,So,,2,0,,,,TORVIK_DUPLICATE_NAME_2
+Elijah Jones,George Mason,Atlantic 10,Atlantic 10,Sr,,1,2,5176811 | 5106056,Longwood | UTEP,SR | JR,ESPN_AMBIGUOUS_NAME_2
+Jayden Reid,Memphis,American,American,Sr,,2,1,5311606,Quinnipiac,SO,TORVIK_DUPLICATE_NAME_2
+Josiah Sanders,Montana,Big Sky,Big Sky,So,,3,1,5237444,Colorado,SO,TORVIK_DUPLICATE_NAME_3
+Christian Jones,Murray State,Missouri Valley,Missouri Valley,Jr,,2,2,4685650 | 5312979,George Washington | Long Beach State,SO | SO,TORVIK_DUPLICATE_NAME_2;ESPN_AMBIGUOUS_NAME_2
+Ater Manyuon,Nicholls,Southland,Southland,Jr,,2,0,,,,TORVIK_DUPLICATE_NAME_2
+Ater Manyuon,Queens University,Atlantic Sun,Atlantic Sun,Jr,,2,0,,,,TORVIK_DUPLICATE_NAME_2
+Will Sydnor,Rutgers,Big Ten,Big Ten,So,,2,0,,,,TORVIK_DUPLICATE_NAME_2
+Binael Basil,Texas A&M-Corpus Christi,Southland,Southland,Jr,,2,1,5317320,Wagner,SO,TORVIK_DUPLICATE_NAME_2
+Damarion Winston,Texas A&M-Corpus Christi,Southland,Southland,Jr,,2,0,,,,TORVIK_DUPLICATE_NAME_2
+Jeremiah Johnson,Tulsa,American,American,Jr,,2,2,4711262 | 5316218,Campbell | Howard,SO | FR,TORVIK_DUPLICATE_NAME_2;ESPN_AMBIGUOUS_NAME_2
+Josiah Sanders,Texas State,Pac 12,Pac-12,Fr,,3,1,5237444,Colorado,SO,TORVIK_DUPLICATE_NAME_3
+Josiah Harris,Louisiana,Sun Belt,Sun Belt,Sr,,1,2,5106292 | 5106607,Cleveland State | La Salle,JR | SR,ESPN_AMBIGUOUS_NAME_2
+Christian Jones,UMass Lowell,America East,America East,So,,2,2,4685650 | 5312979,George Washington | Long Beach State,SO | SO,TORVIK_DUPLICATE_NAME_2;ESPN_AMBIGUOUS_NAME_2
+Elijah Elliott,North Florida,Atlantic Sun,Atlantic Sun,Jr,,1,2,4897978 | 5243080,New Mexico State | Ohio,SR | SO,ESPN_AMBIGUOUS_NAME_2
+Isaiah Brown,North Florida,Atlantic Sun,Atlantic Sun,Fr,,3,2,5144372 | 5243100,Florida | Howard,JR | SO,TORVIK_DUPLICATE_NAME_3;ESPN_AMBIGUOUS_NAME_2
+Jayden Johnson,South Florida,American,American,Fr,,2,1,5243405,Bowling Green,JR,TORVIK_DUPLICATE_NAME_2
+RJ Jones,Washington State,Pac 12,Pac-12,Jr,,1,2,5455094 | 5175042,Akron | TCU,FR | SO,ESPN_AMBIGUOUS_NAME_2
+Malachi Brown,Western Carolina,Southern,Southern,Sr,,1,2,5164367 | 5310822,Georgia State | Michigan,JR | FR,ESPN_AMBIGUOUS_NAME_2
+Emmanuel Kanga,Wichita State,American,American,So,,2,1,5196954,George Mason,FR,TORVIK_DUPLICATE_NAME_2
