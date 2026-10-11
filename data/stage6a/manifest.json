@@ -21,15 +21,22 @@
     "normalized_name_school_duplicates": 0
   },
   "review": {
-    "rows": 31,
-    "player_names": 24,
+    "rows": 23,
+    "player_names": 16,
     "torvik_duplicate_name_groups_requiring_review": 16,
-    "single_torvik_names_with_ambiguous_espn_matches": 8
+    "single_torvik_names_with_ambiguous_espn_matches": 0,
+    "owner_approved_mappings": 8
   },
   "school_conference": {
     "torvik_schools": 364,
     "schools_found_in_espn_map": 363,
-    "schools_not_found_in_espn_map": [{"school":"New Haven","conference":"NEC","players":10}],
+    "schools_not_found_in_espn_map": [
+      {
+        "school": "New Haven",
+        "conference": "NEC",
+        "players": 10
+      }
+    ],
     "conference_label_differences_canonicalized": 9
   }
 }
