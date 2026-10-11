@@ -8,6 +8,7 @@ import {
   owedSlots,
   playerRows,
   recentPicks,
+  roundPicks,
   rosterForOwner,
 } from '../../src/ui/view-model.js';
 
@@ -21,6 +22,12 @@ describe('Stage 3 read-only view models', () => {
     expect(board.length).toBe(6);
     expect(board[0].cells.map((cell) => cell.slot.roundPick)).toEqual([1, 2, 3, 4]);
     expect(board[1].cells.map((cell) => cell.slot.roundPick)).toEqual([4, 3, 2, 1]);
+  });
+
+  it('builds a sequential mobile round list in actual pick order', () => {
+    const state = makeDemoDraft(NOW);
+    expect(roundPicks(state, demoPlayers, 2).map((cell) => cell.slot.id))
+      .toEqual(['R2-P1', 'R2-P2', 'R2-P3', 'R2-P4']);
   });
 
   it('shows an owed slot plus the next active slot after demo expiration', () => {
