@@ -17,6 +17,8 @@
   },
   "include": [
     "vite.config.ts",
+    "vitest.stage8.config.ts",
+    "scripts/stage8-mock.ts",
     "tests",
     "src/domain/**/*.ts",
     "src/server/**/*.ts",
