@@ -60,7 +60,7 @@ The large automatic-universe CSV is retained as the exact Stage 6A conversation 
 
 The owner has now approved all **8** otherwise-single Torvik names that mapped to multiple ESPN players. Those decisions are recorded in `data/stage6a/owner-approved-mappings.csv`.
 
-The remaining unresolved population is **23 Torvik rows across 16 player names**, all from duplicate-name groups within the Torvik source.
+The owner has additionally approved **5** duplicate-name groups after current-roster/history verification. The remaining unresolved population is **14 Torvik rows across 11 player names**, all from duplicate-name groups within the Torvik source.
 
 Two other repeated Torvik names — Jake Davis and Trent Perry — require no review because every repeated row carries a distinct valid ESPN ID.
 
@@ -103,4 +103,4 @@ This supersedes the earlier product-spec assumption that the imported pool is co
 
 Stage 6A stops here.
 
-No player data has been applied to D1 or wired into application setup. Eight review groups are owner-approved; the next bounded action is to adjudicate or otherwise disposition the remaining 16 duplicate-name groups, then regenerate and seal the reconciled universe before implementing ingestion/refresh behavior.
+No player data has been applied to D1 or wired into application setup. Thirteen review groups are owner-approved; the next bounded action is to adjudicate or otherwise disposition the remaining 11 duplicate-name groups, then regenerate and seal the reconciled universe before implementing ingestion/refresh behavior.
