@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 
 const checkOnly = process.argv.includes('--check');
 const databaseId = checkOnly
@@ -30,6 +30,5 @@ const config = {
   ],
 };
 
-mkdirSync('.wrangler', { recursive: true });
-writeFileSync('.wrangler/deploy.jsonc', `${JSON.stringify(config, null, 2)}\n`);
+writeFileSync('.wrangler.deploy.jsonc', `${JSON.stringify(config, null, 2)}\n`);
 console.log(checkOnly ? 'Wrote dry-run Wrangler config.' : 'Wrote deployment Wrangler config.');
