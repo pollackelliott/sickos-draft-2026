@@ -29,12 +29,12 @@ This repository is intentionally developed in bounded stages. `docs/product-spec
 
 Stage 5 — Commissioner tools — COMPLETE.
 
-Stage 6A — Player universe reconciliation audit — COMPLETE. All 24 review groups are owner-approved, the final reconciled universe is 6,322 players, and the sealed master SHA-256 is `b59ec2cd479ea89e3fdf85399c5a5f26f76fb25442c39f59caa2fe4e52e1adae`. No player data has been applied to D1 or application setup.
+Stage 6A — Player universe reconciliation audit — COMPLETE. All 24 review groups are owner-approved, the final reconciled universe is 6,322 players, and the sealed master SHA-256 is `b59ec2cd479ea89e3fdf85399c5a5f26f76fb25442c39f59caa2fe4e52e1adae`. That exact sealed universe is now loaded in production.
 
-Stage 6B — validated ingestion/refresh implementation — COMPLETE. The server now validates canonical player CSVs and can transactionally replace the unreferenced imported universe while preserving write-ins and all slot/event-referenced players. Remote D1 has not been created or mutated.
+Stage 6B — validated ingestion/refresh implementation — COMPLETE. The server validates canonical player CSVs and can transactionally replace the unreferenced imported universe while preserving write-ins and all slot/event-referenced players. The production D1 database is live and the sealed Stage 6A universe was loaded through this path.
 
 Stage 6C — real league setup — COMPLETE. The real 14-manager owner set is configured with stable owner IDs, Elliott Pollack as commissioner, 18 rounds, a 24-hour initial clock, and a provisional alphabetical first-round order. Chris Barbas is complete; Jake's last name and the final draft order remain safe pre-start edits. Private league codes are not committed to source control.
 
-Stage 7 — deployment and adversarial testing — AUTHORIZED and repository-ready. Worker/static-assets integration, deployment configuration generation, private bootstrap generation, player-upload hash guarding, and production smoke tooling are implemented. Remote Cloudflare rollout has NOT occurred because this session has no authenticated Cloudflare/D1 connector.
+Stage 7 — deployment and adversarial testing — COMPLETE. Production is live on Cloudflare Workers + Static Assets with remote D1. Migrations, private bootstrap, sealed 6,322-player upload, and the repository-owned non-destructive production smoke suite all passed. The production draft remains `NOT_STARTED`, with 14 owners and all 252 slots still FUTURE.
 
-Stage 7 remains OPEN until migrations, real bootstrap, Worker deployment, sealed 6,322-player upload, and production smoke tests are proven against remote Cloudflare. Do not begin Stage 8 before that proof.
+Stage 8 — abbreviated full mock draft — AUTHORIZED. Stage 8 must exercise the real draft workflow in isolated test state and must not start, reset, make picks in, or otherwise mutate the real production draft.
