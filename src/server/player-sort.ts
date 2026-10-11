@@ -8,9 +8,17 @@ export function playerSortKey(name: string): string {
 
   const comma = normalized.indexOf(',');
   if (comma > 0) {
-    const surname = normalized.slice(0, comma).trim();
-    const given = normalized.slice(comma + 1).trim();
-    return [surname, given].filter(Boolean).join(' ');
+    const left = normalized.slice(0, comma).trim();
+    const right = normalized.slice(comma + 1).trim();
+
+    if (SUFFIXES.has(right)) {
+      const parts = left.split(' ');
+      const surname = parts.at(-1) ?? '';
+      const given = parts.slice(0, -1).join(' ');
+      return [surname, given, right].filter(Boolean).join(' ');
+    }
+
+    return [left, right].filter(Boolean).join(' ');
   }
 
   const parts = normalized.split(' ');
