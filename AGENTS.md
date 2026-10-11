@@ -21,6 +21,7 @@ This repository is intentionally developed in bounded stages. `docs/product-spec
 15. Stage 5 commissioner mutations must require server-side commissioner identity and must still pass through the controlling domain and persistence rules.
 16. Stage 6 player identity prefers durable external IDs (ESPN ID when known) plus immutable application internal IDs. Name + School is reconciliation evidence, not permanent identity.
 17. Stage 6 refreshes must never silently merge ambiguous players or rewrite completed draft selections.
+18. Stage 6B player-universe refreshes must remain transactional, commissioner-authorized when routed over HTTP, preserve write-ins, and freeze any imported player referenced by a current slot or historical draft event.
 
 ## Current authorized state
 
@@ -28,4 +29,6 @@ Stage 5 — Commissioner tools — COMPLETE.
 
 Stage 6A — Player universe reconciliation audit — COMPLETE. All 24 review groups are owner-approved, the final reconciled universe is 6,322 players, and the sealed master SHA-256 is `b59ec2cd479ea89e3fdf85399c5a5f26f76fb25442c39f59caa2fe4e52e1adae`. No player data has been applied to D1 or application setup.
 
-The next stage is Stage 6B — validated ingestion/refresh implementation. Do not begin Stage 6B until explicitly authorized by the owner.
+Stage 6B — validated ingestion/refresh implementation — COMPLETE. The server now validates canonical player CSVs and can transactionally replace the unreferenced imported universe while preserving write-ins and all slot/event-referenced players. Remote D1 has not been created or mutated.
+
+The next bounded stage is Stage 6C — real league setup. Do not begin Stage 6C until explicitly authorized by the owner and the final owner list/draft order are available. Production deployment remains Stage 7.
