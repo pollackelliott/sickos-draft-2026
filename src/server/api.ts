@@ -3,6 +3,7 @@ import { authenticateOwner } from './auth.js';
 import { D1DraftStore } from './d1-store.js';
 import { DraftService } from './service.js';
 import { PlayerUniverseImportError, refreshPlayerUniverseFromCsv } from './player-import.js';
+import { updatePreDraftOwners } from './league-setup.js';
 import type { D1Database } from './d1-types.js';
 import type { OwnerRecord } from './store-types.js';
 
@@ -229,6 +230,31 @@ export async function handleApi(request: Request, env: WorkerEnv): Promise<Respo
         if (!slotId) return json({ error: 'Draft slot is required.' }, { status: 400 });
         const snapshot = await service.removePick({ slotId, nowMs: Date.now(), actorOwnerId: commissioner.id });
         return json({ draft: publicState(snapshot.state, snapshot.revision) });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/prestart-owners') {
+        const body = await bodyJson<{ owners?: unknown }>(request);
+        if (!Array.isArray(body?.owners)) {
+          return json({ error: 'owners must be an array.' }, { status: 400 });
+        }
+        const owners = body.owners.map((entry) => {
+          if (!entry || typeof entry !== 'object') return null;
+          const row = entry as Record<string, unknown>;
+          const id = requiredString(row.id);
+          const name = requiredString(row.name);
+          const draftPosition = typeof row.draftPosition === 'number' && Number.isInteger(row.draftPosition)
+            ? row.draftPosition
+            : null;
+          return id && name && draftPosition ? { id, name, draftPosition } : null;
+        });
+        if (owners.some((owner) => !owner)) {
+          return json({ error: 'Every owner needs id, name, and integer draftPosition.' }, { status: 400 });
+        }
+        const summary = await updatePreDraftOwners(env.DB, owners as Array<{ id: string; name: string; draftPosition: number }>, {
+          nowMs: Date.now(),
+          actorOwnerId: commissioner.id,
+        });
+        return json({ setup: summary });
       }
 
       if (request.method === 'POST' && url.pathname === '/api/commissioner/player-universe') {
