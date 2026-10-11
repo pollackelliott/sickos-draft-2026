@@ -7,11 +7,10 @@ import { IdentityModal } from './ui/modals';
 import { DraftPage } from './ui/draft-page';
 import { PlayersPage } from './ui/players-page';
 import { TeamsPage } from './ui/teams-page';
-import { RulesPage } from './ui/rules-page';
 import { CommissionerPage } from './ui/commissioner-page';
 
-type Page = 'Draft' | 'Players' | 'Teams' | 'Rules' | 'Commissioner';
-const publicPages: Page[] = ['Draft', 'Players', 'Teams', 'Rules'];
+type Page = 'Draft' | 'Players' | 'Teams' | 'Commissioner';
+const publicPages: Page[] = ['Draft', 'Players', 'Teams'];
 const api = new DraftApiClient();
 
 export function App() {
@@ -83,7 +82,7 @@ export function App() {
           {owner ? <div className="identity-box"><span className="spectator-pill owner-pill"><span /> {owner.name}</span><button type="button" onClick={changeUser}>Change user</button></div>
             : <button type="button" className="spectator-pill login-pill" onClick={() => setIdentityOpen(true)}><span /> Enter code</button>}
         </div>
-        <nav className="tabs" aria-label="Primary navigation">{pages.map((item) => <button type="button" key={item} className={item === page ? 'tab active' : 'tab'} onClick={() => setPage(item)} aria-current={item === page ? 'page' : undefined}>{item}</button>)}</nav>
+        <nav className="tabs" aria-label="Primary navigation">{pages.map((item) => <button type="button" key={item} className={item === page ? 'tab active' : 'tab'} onClick={() => setPage(item)} aria-current={item === page ? 'page' : undefined}>{item === 'Commissioner' ? <><span className="tab-label-wide">Commissioner</span><span className="tab-label-narrow">Admin</span></> : item}</button>)}</nav>
       </header>
 
       <main className="content">
@@ -92,7 +91,6 @@ export function App() {
         {draft && page === 'Draft' && <DraftPage draft={draft} owner={owner} onGoPlayers={() => setPage('Players')} />}
         {draft && page === 'Players' && <PlayersPage draft={draft} owner={owner} code={code} onDraftChanged={(next) => { setDraft(next); setPage('Draft'); }} />}
         {draft && page === 'Teams' && <TeamsPage draft={draft} />}
-        {draft && page === 'Rules' && <RulesPage draft={draft} />}
         {draft && page === 'Commissioner' && owner?.isCommissioner && code && (
           <CommissionerPage draft={draft} code={code} onDraftChanged={setDraft} />
         )}
