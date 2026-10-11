@@ -21,11 +21,12 @@
     "normalized_name_school_duplicates": 0
   },
   "review": {
-    "rows": 7,
-    "player_names": 6,
-    "torvik_duplicate_name_groups_requiring_review": 6,
+    "rows": 0,
+    "player_names": 0,
+    "torvik_duplicate_name_groups_requiring_review": 0,
     "single_torvik_names_with_ambiguous_espn_matches": 0,
-    "owner_approved_mappings": 18
+    "owner_approved_review_groups": 24,
+    "owner_approved_mapping_rows": 26
   },
   "school_conference": {
     "torvik_schools": 364,
@@ -38,5 +39,26 @@
       }
     ],
     "conference_label_differences_canonicalized": 9
+  },
+  "final_master": {
+    "rows": 6322,
+    "sha256": "b59ec2cd479ea89e3fdf85399c5a5f26f76fb25442c39f59caa2fe4e52e1adae",
+    "source_counts": {
+      "ESPN_ONLY": 2723,
+      "TORVIK_ESPN_ID": 1574,
+      "TORVIK_ESPN_NAME": 970,
+      "TORVIK_ONLY": 1031,
+      "OWNER_APPROVED_ESPN_MATCH": 15,
+      "OWNER_APPROVED_NO_ESPN_ID": 9
+    },
+    "integrity": {
+      "duplicate_internal_ids": 0,
+      "duplicate_espn_ids": 0,
+      "duplicate_normalized_name_school": 0,
+      "blank_name": 0,
+      "blank_school": 0,
+      "blank_conference": 0
+    },
+    "applied_to_database": false
   }
 }
