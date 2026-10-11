@@ -1,9 +1,4 @@
 name,review_torvik_rows,torvik_schools,torvik_ids,espn_candidate_count,espn_candidate_ids,espn_candidate_schools,reason
-Ater Manyuon,2,Nicholls | Queens University,NA | NA,0,,,TORVIK_DUPLICATE_NAME
-Caleb Williams,1,Auburn | Georgetown | Jacksonville,5319273 | 5061569 | NA,3,5319273 | 5061569 | 5243035,Auburn | Georgetown | Lafayette,TORVIK_DUPLICATE_NAME
-Cameron Williams,1,Duke | Kent State,5210407 | NA,2,5210407 | 5314723,Duke | Portland,TORVIK_DUPLICATE_NAME
-Christian Jones,2,Murray State | UMass Lowell,NA | NA,2,4685650 | 5312979,George Washington | Long Beach State,TORVIK_DUPLICATE_NAME
-Emmanuel Kanga,1,George Mason | Wichita State,5196954 | NA,1,5196954,George Mason,TORVIK_DUPLICATE_NAME
 Isaiah Brown,1,Florida | Howard | North Florida,5144372 | 5243100 | NA,2,5144372 | 5243100,Florida | Howard,TORVIK_DUPLICATE_NAME
 Jayden Johnson,1,Bowling Green | South Florida,5243405 | NA,1,5243405,Bowling Green,TORVIK_DUPLICATE_NAME
 Jayden Reid,1,Memphis | Quinnipiac,NA | 5311606,1,5311606,Quinnipiac,TORVIK_DUPLICATE_NAME
