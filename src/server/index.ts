@@ -7,3 +7,5 @@ export { authenticateOwner, normalizeOwnerCode, OWNER_CODE_HEADER } from './auth
 export type * from './d1-types.js';
 export type * from './store-types.js';
 export type { WorkerEnv } from './api.js';
+export { PlayerUniverseImportError, parsePlayerUniverseCsv, refreshPlayerUniverse, refreshPlayerUniverseFromCsv } from './player-import.js';
+export type { ImportedPlayerRecord, PlayerUniverseRefreshOptions, PlayerUniverseRefreshSummary } from './player-import.js';
