@@ -1,0 +1,12 @@
+{
+  "managers": 14,
+  "rounds": 18,
+  "initial_clock_hours": 24,
+  "commissioner_owner_id": "owner-elliott-pollack",
+  "order_status": "PROVISIONAL_ALPHABETICAL",
+  "order_editable_until": "DRAFT_START",
+  "display_name_notes": {
+    "owner-jake": "Last name pending; stable owner identity will not change when renamed."
+  },
+  "league_codes": "PRIVATE_NOT_COMMITTED"
+}
