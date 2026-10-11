@@ -23,6 +23,7 @@ This repository is intentionally developed in bounded stages. `docs/product-spec
 17. Stage 6 refreshes must never silently merge ambiguous players or rewrite completed draft selections.
 18. Stage 6B player-universe refreshes must remain transactional, commissioner-authorized when routed over HTTP, preserve write-ins, and freeze any imported player referenced by a current slot or historical draft event.
 19. Stage 6C owner identity is immutable by owner ID. Display name and first-round position may change only while the draft is NOT_STARTED; league codes and commissioner flags must survive those changes.
+20. Stage 7 deployment secrets, D1 UUIDs, private owner codes, and generated bootstrap SQL must never be committed. Production proof must preserve lifecycle NOT_STARTED and must not make test picks.
 
 ## Current authorized state
 
@@ -34,4 +35,6 @@ Stage 6B — validated ingestion/refresh implementation — COMPLETE. The server
 
 Stage 6C — real league setup — COMPLETE. The real 14-manager owner set is configured with stable owner IDs, Elliott Pollack as commissioner, 18 rounds, a 24-hour initial clock, and a provisional alphabetical first-round order. Chris Barbas is complete; Jake's last name and the final draft order remain safe pre-start edits. Private league codes are not committed to source control.
 
-The next stage is Stage 7 — deployment and adversarial testing. Do not create or mutate remote production infrastructure until explicitly authorized by the owner.
+Stage 7 — deployment and adversarial testing — AUTHORIZED and repository-ready. Worker/static-assets integration, deployment configuration generation, private bootstrap generation, player-upload hash guarding, and production smoke tooling are implemented. Remote Cloudflare rollout has NOT occurred because this session has no authenticated Cloudflare/D1 connector.
+
+Stage 7 remains OPEN until migrations, real bootstrap, Worker deployment, sealed 6,322-player upload, and production smoke tests are proven against remote Cloudflare. Do not begin Stage 8 before that proof.
