@@ -122,7 +122,7 @@ Player-universe refresh is intentionally replacement-oriented for unreferenced i
 - ESPN-ID remaps and imported identity collisions fail closed rather than guessing;
 - exact incoming Name + School collisions with an existing write-in preserve the write-in and skip the incoming duplicate.
 
-A refresh uses a temporary normalized-identity namespace inside the same transaction before applying the new rows. This permits legitimate name/school changes without making correctness depend on row ordering. Bulk inserts are grouped at eight rows per statement so the canonical 12 bound values per row remain below D1's per-query bound-parameter ceiling.
+A refresh uses a temporary normalized-identity namespace inside the same transaction before applying the new rows. This permits legitimate name/school changes without making correctness depend on row ordering. Bulk inserts are grouped at seven rows per statement so the canonical player fields plus the derived surname sort key remain below D1's per-query bound-parameter ceiling.
 
 The commissioner-only HTTP route accepts canonical CSV directly. A browser upload surface is deliberately deferred; Stage 6B establishes and tests the safe server operation first.
 
