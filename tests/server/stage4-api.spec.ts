@@ -5,7 +5,10 @@ import { DraftService, D1DraftStore, handleApi, initializeDraft, type OwnerRecor
 import { SqliteD1 } from './sqlite-d1.js';
 
 const HOUR = 60 * 60 * 1000;
-const migrationSql = readFileSync(new URL('../../migrations/0001_initial.sql', import.meta.url), 'utf8');
+const migrationSql = [
+  readFileSync(new URL('../../migrations/0001_initial.sql', import.meta.url), 'utf8'),
+  readFileSync(new URL('../../migrations/0003_player_sort_name.sql', import.meta.url), 'utf8'),
+].join('\n');
 const owners: OwnerRecord[] = [
   { id: 'avery', name: 'Avery', draftPosition: 1, code: 'BLUE42', isCommissioner: true },
   { id: 'jordan', name: 'Jordan', draftPosition: 2, code: 'TIGER81', isCommissioner: false },
