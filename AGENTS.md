@@ -26,6 +26,6 @@ This repository is intentionally developed in bounded stages. `docs/product-spec
 
 Stage 5 — Commissioner tools — COMPLETE.
 
-Stage 6A — Player universe reconciliation audit — CHECKPOINT COMPLETE on the Stage 6A audit branch. No player data has been applied to D1 or application setup.
+Stage 6A — Player universe reconciliation audit — COMPLETE. All 24 review groups are owner-approved, the final reconciled universe is 6,322 players, and the sealed master SHA-256 is `b59ec2cd479ea89e3fdf85399c5a5f26f76fb25442c39f59caa2fe4e52e1adae`. No player data has been applied to D1 or application setup.
 
-The current blocker is owner disposition of the 24 review groups documented in `docs/stage6a-report.md` / `data/stage6a/`. Do not proceed to ingestion/refresh implementation until that review population is resolved or explicitly dispositioned.
+The next stage is Stage 6B — validated ingestion/refresh implementation. Do not begin Stage 6B until explicitly authorized by the owner.
