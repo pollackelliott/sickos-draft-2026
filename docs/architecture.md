@@ -63,13 +63,13 @@ Stage 2 does not create a remote D1 database, deploy a Worker, implement real CS
 
 ## Stage 3 read-only UI decision
 
-The read-only browser application keeps navigation dependency-free: four React tabs (`Draft`, `Players`, `Teams`, `Rules`) are controlled with local UI state rather than adding a router before one is needed.
+The browser application keeps navigation dependency-free: three public React tabs (`Draft`, `Players`, `Teams`) are controlled with local UI state rather than adding a router before one is needed. The former Rules tab was removed once the league no longer needed in-app rule reference.
 
 Pure presentation derivation lives in `src/ui/view-model.ts`. Board layout, recent picks, player availability labels, team rosters, conference checklists, and countdown formatting are therefore testable without React.
 
 `src/ui/demo-data.ts` builds a deterministic but live-looking draft snapshot from the Stage 1 domain engine. It intentionally includes an owed pick at the end of Round 1 and the same owner on the clock at the start of Round 2, making the asynchronous/backfill model visible before Stage 4 adds drafting.
 
-The visual language follows the existing Sickos fantasy site: tan floor-inspired background, dark header, orange accent, compact typography, and minimal ornamentation. The draft app departs from the existing narrow layout on larger screens because the board benefits from desktop width; on phones, the board remains horizontally scrollable with a sticky Round column.
+The visual language follows the existing Sickos fantasy site: tan floor-inspired background, dark header, orange accent, compact typography, and minimal ornamentation. The draft app departs from the existing narrow layout on larger screens because the board benefits from desktop width. On phones, Draft defaults to one vertically readable round at a time with previous/next controls; the full horizontally scrollable board remains available as an explicit fallback.
 
 ## Stage 4 identity and drafting decision
 
