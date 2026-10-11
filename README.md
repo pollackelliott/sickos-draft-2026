@@ -4,7 +4,7 @@ A deliberately simple mobile-first web app for the Sickos League's asynchronous 
 
 ## Current status
 
-**Stage 6B — Validated player ingestion and refresh complete.**
+**Stage 6C — Real league setup complete.**
 
 The project now has:
 
@@ -17,9 +17,11 @@ The project now has:
 - a sealed 6,322-player 2026–27 reconciled universe from ESPN + Bart Torvik inputs;
 - validated CSV parsing with durable internal/ESPN identity;
 - transactional commissioner-only player-universe refresh that freezes referenced players and preserves write-ins;
+- the real 14-manager league configuration with Elliott Pollack as commissioner, 18 rounds, and a 24-hour initial clock;
+- pre-start owner-name and draft-order editing that preserves stable owner IDs and private login codes;
 - mobile-first Sickos styling.
 
-The real owner list/draft order, actual D1 initialization, and production deployment have intentionally not been completed yet.
+The real owner list is configured. The current alphabetical order is provisional and may be changed before Start Draft. Remote D1 initialization and production deployment have intentionally not been completed yet.
 
 The controlling product contract is [`docs/product-spec.md`](docs/product-spec.md). Future Codex/agent work must also follow [`AGENTS.md`](AGENTS.md).
 
@@ -70,9 +72,10 @@ Small deterministic development fixtures remain in the repository for tests and 
 - [`docs/stage5-report.md`](docs/stage5-report.md)
 - [`docs/stage6a-report.md`](docs/stage6a-report.md)
 - [`docs/stage6b-report.md`](docs/stage6b-report.md)
+- [`docs/stage6c-report.md`](docs/stage6c-report.md)
 
 ## Development stages
 
 See §32 of `docs/product-spec.md`.
 
-Stage 6A and 6B are complete. The next bounded step is **Stage 6C — real league setup** once the final owner list and draft order are available. Production deployment remains Stage 7.
+Stage 6A, 6B, and 6C are complete. The next stage is **Stage 7 — deployment and adversarial testing**, and it requires explicit owner approval.
