@@ -22,6 +22,7 @@ This repository is intentionally developed in bounded stages. `docs/product-spec
 16. Stage 6 player identity prefers durable external IDs (ESPN ID when known) plus immutable application internal IDs. Name + School is reconciliation evidence, not permanent identity.
 17. Stage 6 refreshes must never silently merge ambiguous players or rewrite completed draft selections.
 18. Stage 6B player-universe refreshes must remain transactional, commissioner-authorized when routed over HTTP, preserve write-ins, and freeze any imported player referenced by a current slot or historical draft event.
+19. Stage 6C owner identity is immutable by owner ID. Display name and first-round position may change only while the draft is NOT_STARTED; league codes and commissioner flags must survive those changes.
 
 ## Current authorized state
 
@@ -31,4 +32,6 @@ Stage 6A — Player universe reconciliation audit — COMPLETE. All 24 review gr
 
 Stage 6B — validated ingestion/refresh implementation — COMPLETE. The server now validates canonical player CSVs and can transactionally replace the unreferenced imported universe while preserving write-ins and all slot/event-referenced players. Remote D1 has not been created or mutated.
 
-The next bounded stage is Stage 6C — real league setup. Do not begin Stage 6C until explicitly authorized by the owner and the final owner list/draft order are available. Production deployment remains Stage 7.
+Stage 6C — real league setup — COMPLETE. The real 14-manager owner set is configured with stable owner IDs, Elliott Pollack as commissioner, 18 rounds, a 24-hour initial clock, and a provisional alphabetical first-round order. Chris Barbas is complete; Jake's last name and the final draft order remain safe pre-start edits. Private league codes are not committed to source control.
+
+The next stage is Stage 7 — deployment and adversarial testing. Do not create or mutate remote production infrastructure until explicitly authorized by the owner.
