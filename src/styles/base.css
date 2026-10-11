@@ -55,6 +55,7 @@ body::before {
 .tabs::-webkit-scrollbar { display: none; }
 .tab { flex: 0 0 auto; border: 0; border-bottom: 3px solid transparent; background: transparent; color: rgba(245,232,208,.45); padding: 10px 14px 9px; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-label-narrow { display: none; }
 
 .content { max-width: 1400px; margin: 0 auto; padding: 16px; }
 .kicker { margin: 0 0 4px; font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .9px; font-weight: 700; }
@@ -94,6 +95,8 @@ h2 { margin-bottom: 0; font-size: 20px; line-height: 1.1; }
 .state-label { margin-top: 17px; color: var(--red); font-family: var(--mono); font-size: 10px !important; letter-spacing: .5px; }
 .pick-on_clock .state-label { color: var(--accent2); }
 .future-label { margin-top: 18px; color: var(--border); font-size: 18px; text-align: center; }
+
+.mobile-board-controls, .mobile-round-view { display: none; }
 
 .recent-list { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
 .recent-row { display: grid; grid-template-columns: 54px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); }
