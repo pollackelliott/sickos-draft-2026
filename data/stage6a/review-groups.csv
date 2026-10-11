@@ -1,5 +1,4 @@
 name,review_torvik_rows,torvik_schools,torvik_ids,espn_candidate_count,espn_candidate_ids,espn_candidate_schools,reason
-AJ Smith,1,Georgia State,NA,2,5107626 | 5107357,Bradley | Temple,ESPN_AMBIGUOUS_NAME
 Ater Manyuon,2,Nicholls | Queens University,NA | NA,0,,,TORVIK_DUPLICATE_NAME
 Binael Basil,2,East Texas A&M | Texas A&M-Corpus Christi,NA | NA,1,5317320,Wagner,TORVIK_DUPLICATE_NAME
 Caleb Williams,1,Auburn | Georgetown | Jacksonville,5319273 | 5061569 | NA,3,5319273 | 5061569 | 5243035,Auburn | Georgetown | Lafayette,TORVIK_DUPLICATE_NAME
@@ -8,18 +7,11 @@ Christian Jones,2,Murray State | UMass Lowell,NA | NA,2,4685650 | 5312979,George
 Damarion Winston,2,East Texas A&M | Texas A&M-Corpus Christi,NA | NA,0,,,TORVIK_DUPLICATE_NAME
 Daniel Culberson,2,Cal State Northridge | Eastern Michigan,NA | NA,0,,,TORVIK_DUPLICATE_NAME
 Daniel Michelini-Jackson,1,East Texas A&M | Texas A&M-Corpus Christi,NA | 5314705,1,5314705,Texas A&M-Corpus Christi,TORVIK_DUPLICATE_NAME
-Elijah Elliott,1,North Florida,NA,2,4897978 | 5243080,New Mexico State | Ohio,ESPN_AMBIGUOUS_NAME
-Elijah Jones,1,George Mason,NA,2,5176811 | 5106056,Longwood | UTEP,ESPN_AMBIGUOUS_NAME
 Emmanuel Kanga,1,George Mason | Wichita State,5196954 | NA,1,5196954,George Mason,TORVIK_DUPLICATE_NAME
 Isaiah Brown,1,Florida | Howard | North Florida,5144372 | 5243100 | NA,2,5144372 | 5243100,Florida | Howard,TORVIK_DUPLICATE_NAME
 Jayden Johnson,1,Bowling Green | South Florida,5243405 | NA,1,5243405,Bowling Green,TORVIK_DUPLICATE_NAME
 Jayden Reid,1,Memphis | Quinnipiac,NA | 5311606,1,5311606,Quinnipiac,TORVIK_DUPLICATE_NAME
 Jayden Williams,1,Bucknell | Georgia Southern | Jackson State,5242553 | 5312448 | NA,4,5242553 | 5106241 | 5312448 | 4869785,Bucknell | Dartmouth | Georgia Southern | Incarnate Word,TORVIK_DUPLICATE_NAME
 Jeremiah Johnson,1,Howard | Tulsa,5316218 | NA,2,4711262 | 5316218,Campbell | Howard,TORVIK_DUPLICATE_NAME
-Josh Smith,1,Duquesne,NA,2,4700859 | 5179291,Liberty | West Georgia,ESPN_AMBIGUOUS_NAME
-Josiah Harris,1,Louisiana,NA,2,5106292 | 5106607,Cleveland State | La Salle,ESPN_AMBIGUOUS_NAME
 Josiah Sanders,2,Colorado | Montana | Texas State,5237444 | NA | NA,1,5237444,Colorado,TORVIK_DUPLICATE_NAME
-Malachi Brown,1,Western Carolina,NA,2,5164367 | 5310822,Georgia State | Michigan,ESPN_AMBIGUOUS_NAME
-Nate Johnson,1,Alabama A&M,NA,2,5241614 | 4898278,Detroit Mercy | Kansas State,ESPN_AMBIGUOUS_NAME
-RJ Jones,1,Washington State,NA,2,5455094 | 5175042,Akron | TCU,ESPN_AMBIGUOUS_NAME
 Will Sydnor,2,Manhattan | Rutgers,NA | NA,0,,,TORVIK_DUPLICATE_NAME
