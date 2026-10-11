@@ -125,3 +125,14 @@ Player-universe refresh is intentionally replacement-oriented for unreferenced i
 A refresh uses a temporary normalized-identity namespace inside the same transaction before applying the new rows. This permits legitimate name/school changes without making correctness depend on row ordering. Bulk inserts are grouped at eight rows per statement so the canonical 12 bound values per row remain below D1's per-query bound-parameter ceiling.
 
 The commissioner-only HTTP route accepts canonical CSV directly. A browser upload surface is deliberately deferred; Stage 6B establishes and tests the safe server operation first.
+
+
+## Stage 6C real-league setup
+
+The real league uses stable internal owner IDs that are independent from display name, login code, and draft position. This allows the commissioner to correct a participant's display name or replace the provisional order without changing owner identity.
+
+The 14-manager provisional league configuration is compiled in `src/server/real-league-config.ts` and mirrored as non-secret data under `data/stage6c/`. Login codes are deliberately excluded from source control and are supplied privately at deployment.
+
+Pre-start owner/order editing is transactional and is allowed only while the draft lifecycle is `NOT_STARTED`. The update preserves the exact owner-ID set, codes, and commissioner flags, temporarily moves positions outside the unique 1..N range, applies the new names/order, then rewrites owner assignment on the existing immutable 252 snake-slot IDs. Historical slot IDs therefore remain stable.
+
+Once Start Draft changes the lifecycle, this setup path closes permanently for that active draft.
