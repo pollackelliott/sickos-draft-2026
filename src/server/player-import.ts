@@ -1,10 +1,11 @@
 import { normalizeIdentityPart } from '../domain/index.js';
 import type { D1Database, D1PreparedStatement, D1Result } from './d1-types.js';
+import { playerSortKey } from './player-sort.js';
 import { ACTIVE_DRAFT_ID } from './store-types.js';
 
 const MAX_IMPORT_BYTES = 2_000_000;
 const MAX_IMPORT_ROWS = 10_000;
-const BULK_ROWS_PER_STATEMENT = 8;
+const BULK_ROWS_PER_STATEMENT = 7;
 
 export type PlayerUniverseImportErrorCode = 'INVALID_CSV' | 'IDENTITY_CONFLICT';
 
@@ -287,7 +288,7 @@ function makeBulkUpsert(
   rows: ImportedPlayerRecord[],
   refreshToken: string,
 ): D1PreparedStatement {
-  const tuple = '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'IMPORTED\')';
+  const tuple = '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'IMPORTED\')';
   const values: unknown[] = [];
 
   for (const row of rows) {
@@ -299,6 +300,7 @@ function makeBulkUpsert(
       row.conference,
       normalizeIdentityPart(row.name),
       normalizeIdentityPart(row.school),
+      playerSortKey(row.name),
       row.year,
       row.position,
       row.height,
@@ -309,7 +311,7 @@ function makeBulkUpsert(
 
   return db.prepare(
     `INSERT INTO players
-       (id, espn_id, name, school, conference, normalized_name, normalized_school,
+       (id, espn_id, name, school, conference, normalized_name, normalized_school, sort_name,
         year, position, height, import_status, import_generation, source)
      VALUES ${rows.map(() => tuple).join(', ')}
      ON CONFLICT(id) DO UPDATE SET
@@ -319,6 +321,7 @@ function makeBulkUpsert(
        conference = excluded.conference,
        normalized_name = excluded.normalized_name,
        normalized_school = excluded.normalized_school,
+       sort_name = excluded.sort_name,
        year = excluded.year,
        position = excluded.position,
        height = excluded.height,
