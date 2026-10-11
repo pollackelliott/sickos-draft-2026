@@ -4,7 +4,7 @@ A deliberately simple mobile-first web app for the Sickos League's asynchronous 
 
 ## Current status
 
-**Stage 6C — Real league setup complete.**
+**Stage 7 — Deployment-ready; remote Cloudflare rollout pending.**
 
 The project now has:
 
@@ -19,9 +19,11 @@ The project now has:
 - transactional commissioner-only player-universe refresh that freezes referenced players and preserves write-ins;
 - the real 14-manager league configuration with Elliott Pollack as commissioner, 18 rounds, and a 24-hour initial clock;
 - pre-start owner-name and draft-order editing that preserves stable owner IDs and private login codes;
+- a Cloudflare Worker + Static Assets production adapter with generated D1 configuration;
+- private bootstrap, sealed player-upload, and non-destructive production smoke utilities;
 - mobile-first Sickos styling.
 
-The real owner list is configured. The current alphabetical order is provisional and may be changed before Start Draft. Remote D1 initialization and production deployment have intentionally not been completed yet.
+The real owner list is configured and the current alphabetical order remains provisional until Start Draft. Repository-owned deployment preparation is complete, but an authenticated Cloudflare operator must still create D1, deploy the Worker, load the sealed player universe, and pass the production smoke checks.
 
 The controlling product contract is [`docs/product-spec.md`](docs/product-spec.md). Future Codex/agent work must also follow [`AGENTS.md`](AGENTS.md).
 
@@ -73,9 +75,11 @@ Small deterministic development fixtures remain in the repository for tests and 
 - [`docs/stage6a-report.md`](docs/stage6a-report.md)
 - [`docs/stage6b-report.md`](docs/stage6b-report.md)
 - [`docs/stage6c-report.md`](docs/stage6c-report.md)
+- [`docs/stage7-report.md`](docs/stage7-report.md)
+- [`docs/deployment-runbook.md`](docs/deployment-runbook.md)
 
 ## Development stages
 
 See §32 of `docs/product-spec.md`.
 
-Stage 6A, 6B, and 6C are complete. The next stage is **Stage 7 — deployment and adversarial testing**, and it requires explicit owner approval.
+Stage 6A, 6B, and 6C are complete. Stage 7 is deployment-ready but remains open until the authenticated Cloudflare rollout and production smoke proof are complete. Stage 8 must not begin before that proof.
