@@ -12,7 +12,7 @@ export interface RealLeagueOwnerDefinition {
 
 export const REAL_LEAGUE_OWNERS: readonly RealLeagueOwnerDefinition[] = [
   { id: 'owner-chris-barbas', name: 'Chris Barbas', draftPosition: 1, isCommissioner: false },
-  { id: 'owner-connor-home', name: 'Connor Home', draftPosition: 2, isCommissioner: false },
+  { id: 'owner-connor-home', name: 'Connor Hope', draftPosition: 2, isCommissioner: false },
   { id: 'owner-connor-kraus', name: 'Connor Kraus', draftPosition: 3, isCommissioner: false },
   { id: 'owner-dan-labosky', name: 'Dan Labosky', draftPosition: 4, isCommissioner: false },
   { id: 'owner-elliott-pollack', name: 'Elliott Pollack', draftPosition: 5, isCommissioner: true },
