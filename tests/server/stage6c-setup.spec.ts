@@ -16,6 +16,7 @@ import { SqliteD1 } from './sqlite-d1.js';
 const migrationSql = [
   readFileSync(new URL('../../migrations/0001_initial.sql', import.meta.url), 'utf8'),
   readFileSync(new URL('../../migrations/0002_player_import_identity.sql', import.meta.url), 'utf8'),
+  readFileSync(new URL('../../migrations/0003_player_sort_name.sql', import.meta.url), 'utf8'),
 ].join('\n');
 
 function codeMap(): Record<string, string> {
