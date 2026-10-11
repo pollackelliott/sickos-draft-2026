@@ -19,9 +19,13 @@ This repository is intentionally developed in bounded stages. `docs/product-spec
 13. Each implementation stage must end with tests and a concise status report before the next stage begins.
 14. If a requirement is ambiguous and materially affects data integrity, stop that specific change rather than inventing league rules.
 15. Stage 5 commissioner mutations must require server-side commissioner identity and must still pass through the controlling domain and persistence rules.
+16. Stage 6 player identity prefers durable external IDs (ESPN ID when known) plus immutable application internal IDs. Name + School is reconciliation evidence, not permanent identity.
+17. Stage 6 refreshes must never silently merge ambiguous players or rewrite completed draft selections.
 
 ## Current authorized state
 
 Stage 5 — Commissioner tools — COMPLETE.
 
-The next stage, Stage 6 — Imports and real data, requires explicit owner approval.
+Stage 6A — Player universe reconciliation audit — CHECKPOINT COMPLETE on the Stage 6A audit branch. No player data has been applied to D1 or application setup.
+
+The current blocker is owner disposition of the 24 review groups documented in `docs/stage6a-report.md` / `data/stage6a/`. Do not proceed to ingestion/refresh implementation until that review population is resolved or explicitly dispositioned.
