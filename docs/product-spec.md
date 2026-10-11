@@ -142,7 +142,7 @@ The reconciled `players.csv` requires durable player identity plus `Name,School,
 
 `owners.csv` requires `DraftPosition,Name,Code`.
 
-Owner order plus number of rounds generates the complete snake. The commissioner configures round count and clock duration.
+Owner order plus number of rounds generates the complete snake. Owner IDs are stable and independent of display name and draft position. Before Start Draft, the commissioner may correct owner display names and replace the provisional first-round order; doing so regenerates the snake ownership assignments while preserving owner IDs and codes. After Start Draft, owner order is locked. The commissioner configures round count and clock duration.
 
 ## 21. CSV export
 
