@@ -45,7 +45,7 @@ export function normalizeLeagueCode(code: string): string {
 }
 
 export class DraftApiClient {
-  constructor(private readonly fetcher: typeof fetch = fetch) {}
+  constructor(private readonly fetcher: typeof fetch = globalThis.fetch.bind(globalThis)) {}
 
   private authHeaders(code?: string): Record<string, string> {
     return code ? { 'x-league-code': normalizeLeagueCode(code) } : {};
