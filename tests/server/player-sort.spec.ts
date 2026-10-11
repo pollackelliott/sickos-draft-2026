@@ -24,6 +24,7 @@ const players: Player[] = [
 describe('player surname ordering', () => {
   it('derives a stable surname-first key', () => {
     expect(playerSortKey('Ben Carter Jr.')).toBe('carter ben jr.');
+    expect(playerSortKey('A.J. Wright, Jr.')).toBe('wright a.j. jr.');
     expect(playerSortKey('Doe, John')).toBe('doe john');
   });
 
