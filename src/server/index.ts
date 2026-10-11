@@ -9,3 +9,7 @@ export type * from './store-types.js';
 export type { WorkerEnv } from './api.js';
 export { PlayerUniverseImportError, parsePlayerUniverseCsv, refreshPlayerUniverse, refreshPlayerUniverseFromCsv } from './player-import.js';
 export type { ImportedPlayerRecord, PlayerUniverseRefreshOptions, PlayerUniverseRefreshSummary } from './player-import.js';
+export { updatePreDraftOwners } from './league-setup.js';
+export type { PreDraftOwnerUpdate, PreDraftOwnerUpdateSummary } from './league-setup.js';
+export { REAL_LEAGUE_CLOCK_DURATION_MS, REAL_LEAGUE_OWNERS, REAL_LEAGUE_ROUNDS, buildRealLeagueOwners } from './real-league-config.js';
+export type { RealLeagueOwnerCodeMap, RealLeagueOwnerDefinition } from './real-league-config.js';
