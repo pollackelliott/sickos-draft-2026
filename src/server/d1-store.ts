@@ -1,5 +1,6 @@
 import { DomainError, normalizeIdentityPart, type DraftSlot, type DraftState, type Owner, type Player } from '../domain/index.js';
 import type { D1Database, D1PreparedStatement, D1Result } from './d1-types.js';
+import { playerSortKey } from './player-sort.js';
 import {
   ACTIVE_DRAFT_ID,
   type DraftMutationEvent,
@@ -256,7 +257,9 @@ export class D1DraftStore {
 
     const rows = await this.db.prepare(
       `SELECT id, name, school, conference, source FROM players ${where}
-        ORDER BY name COLLATE NOCASE, school COLLATE NOCASE LIMIT ? OFFSET ?`,
+        ORDER BY COALESCE(NULLIF(sort_name, ''), normalized_name) COLLATE NOCASE,
+                 normalized_name COLLATE NOCASE,
+                 school COLLATE NOCASE LIMIT ? OFFSET ?`,
     ).bind(...values, limit, offset).all<PlayerRow>();
 
     return { players: requireRows(rows).map(toPlayer), total: countRow?.total ?? 0 };
@@ -275,8 +278,8 @@ export class D1DraftStore {
       statements.push(
         this.db.prepare(
           `INSERT INTO players
-             (id, name, school, conference, normalized_name, normalized_school, source)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+             (id, name, school, conference, normalized_name, normalized_school, sort_name, source)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         ).bind(
           player.id,
           player.name,
@@ -284,6 +287,7 @@ export class D1DraftStore {
           player.conference,
           normalizeIdentityPart(player.name),
           normalizeIdentityPart(player.school),
+          playerSortKey(player.name),
           player.source,
         ),
       );
