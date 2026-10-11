@@ -77,11 +77,11 @@ Any correction must leave roster conference rules valid.
 
 ## 12. Player pool
 
-The commissioner supplies one or more authoritative roster/player-universe files, normally producing a reconciled pool of roughly 5,000–6,500 players. The canonical import requires at least:
+The commissioner supplies one or more authoritative roster/player-universe files, normally producing a reconciled pool of roughly 5,000–6,500 players. Raw source files may vary, but the reconciled Stage 6 canonical import requires durable identity plus at least Name, School, and Conference. The preferred canonical columns are:
 
-`Name,School,Conference`
+`internal_id,espn_id,name,school,conference`
 
-Optional durable external identifiers such as ESPN player ID may be preserved, along with lightweight roster fields such as Year, Position, and Height when supplied. Every player receives an immutable application internal ID. Player names need not be unique; Name + School is sufficient human-facing identification but is not the permanent identity key.
+`espn_id` is optional when unavailable, but any row without ESPN ID must carry an immutable `internal_id`. Optional fields such as Year, Position, Height, and reconciliation/source status may be preserved when supplied. Player names need not be unique; Name + School is sufficient human-facing identification but is not the permanent identity key.
 
 Player-universe refreshes are allowed before and during the draft. A refresh must preserve internal IDs when identity is known, add newly discovered players, preserve write-ins, and never silently merge ambiguous identities. During an active draft, already-drafted player records are immutable; undrafted player roster metadata may be refreshed.
 
@@ -138,7 +138,7 @@ The site should update without manual refresh. Recommended behavior: immediate r
 
 ## 20. Setup files
 
-`players.csv` requires `Name,School,Conference`.
+The reconciled `players.csv` requires durable player identity plus `Name,School,Conference`; the preferred schema is `internal_id,espn_id,name,school,conference`, with `internal_id` mandatory whenever ESPN ID is absent.
 
 `owners.csv` requires `DraftPosition,Name,Code`.
 
