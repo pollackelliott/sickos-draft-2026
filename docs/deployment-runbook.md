@@ -74,7 +74,7 @@ Generate bootstrap SQL from the private owner-code sheet:
 node scripts/generate-bootstrap-sql.mjs --codes-file="/absolute/path/to/sickos-draft-2026-private-owner-codes.csv"
 ```
 
-The generated `.wrangler/bootstrap.sql` is ignored by Git and contains the private league codes.
+The generated `.wrangler/bootstrap.sql` is ignored by Git and contains the private league codes. It deliberately contains no SQL `BEGIN`, `COMMIT`, or `SAVEPOINT` statements because Wrangler's remote D1 file execution manages the operation and rejects explicit SQL transaction control.
 
 Apply it exactly once:
 
