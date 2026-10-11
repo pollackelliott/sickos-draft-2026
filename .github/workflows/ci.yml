@@ -16,3 +16,5 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: node scripts/write-wrangler-config.mjs --check
+      - run: npx wrangler deploy --dry-run --config .wrangler/deploy.jsonc --outdir .wrangler/dry-run
