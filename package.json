@@ -14,7 +14,8 @@
     "d1:migrate": "node scripts/write-wrangler-config.mjs && wrangler d1 migrations apply DB --remote --config .wrangler.deploy.jsonc",
     "deploy:cloudflare": "npm run build && node scripts/write-wrangler-config.mjs && wrangler deploy --config .wrangler.deploy.jsonc",
     "players:upload": "node scripts/upload-player-universe.mjs",
-    "smoke:production": "node scripts/smoke-production.mjs"
+    "smoke:production": "node scripts/smoke-production.mjs",
+    "stage8:mock": "vitest run --config vitest.stage8.config.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
