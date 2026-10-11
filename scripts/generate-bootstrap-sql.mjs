@@ -81,7 +81,6 @@ const ordered = [...ownerRows].sort(
 
 const lines = [
   'PRAGMA foreign_keys = ON;',
-  'BEGIN TRANSACTION;',
   `INSERT INTO drafts (id, rounds, clock_duration_ms, lifecycle, paused, revision) VALUES ('active', ${rounds}, ${clockMs}, 'NOT_STARTED', 0, 0);`,
 ];
 
@@ -103,7 +102,7 @@ for (let round = 1; round <= rounds; round += 1) {
   });
 }
 
-lines.push('COMMIT;', '');
+lines.push('');
 mkdirSync('.wrangler', { recursive: true });
 writeFileSync('.wrangler/bootstrap.sql', lines.join('\n'));
 console.log(`Wrote private bootstrap SQL for ${ordered.length} owners and ${overallPick - 1} slots.`);
