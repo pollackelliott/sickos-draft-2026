@@ -1,0 +1,35 @@
+{
+  "input": {
+    "espn_file": "CBB_rosters_26_27_v1_oct9 - CBB_rosters_26_27_v1_oct9.csv",
+    "espn_sha256": "37142b97f0c61474d52d2deb95edde130891bb32e5a94635a180f7fb238dfdd9",
+    "espn_rows": 5281,
+    "torvik_file": "Torvik_Player_Universe_26_27_v1_Oct9 - Torvik_Player_Universe_26_27_v1_Oct9.csv",
+    "torvik_sha256": "b084f10094aee207ccf6c814d4ad8454dfc5b0796d46727f45ca13ed253fb895",
+    "torvik_rows": 3606
+  },
+  "auto_master": {
+    "rows": 6312,
+    "sha256": "fb8c0e797d76f99da15b5f1ba82a6b9cc37f23ad4008d01dd8b53fb9e1959bbb",
+    "status_counts": {
+      "ESPN_ONLY": 2737,
+      "TORVIK_ESPN_ID": 1574,
+      "TORVIK_ESPN_NAME": 970,
+      "TORVIK_ONLY": 1031
+    },
+    "safe_school_changes_from_espn": 916,
+    "unique_internal_id_duplicates": 0,
+    "normalized_name_school_duplicates": 0
+  },
+  "review": {
+    "rows": 31,
+    "player_names": 24,
+    "torvik_duplicate_name_groups_requiring_review": 16,
+    "single_torvik_names_with_ambiguous_espn_matches": 8
+  },
+  "school_conference": {
+    "torvik_schools": 364,
+    "schools_found_in_espn_map": 363,
+    "schools_not_found_in_espn_map": [{"school":"New Haven","conference":"NEC","players":10}],
+    "conference_label_differences_canonicalized": 9
+  }
+}
