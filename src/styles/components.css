@@ -38,18 +38,48 @@
 .conference-item { display: flex; justify-content: space-between; gap: 6px; padding: 7px 8px; border-radius: 6px; background: var(--surface2); color: var(--muted); font-size: 10px; }
 .conference-item.filled { color: var(--green); font-weight: 700; }
 
-.rules-list { display: grid; gap: 9px; }
-.rules-list article { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 13px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-.rules-list article > span { font-family: var(--mono); color: var(--accent); font-size: 11px; font-weight: 800; }
-.rules-list h3 { margin: 0 0 4px; font-size: 13px; }
-.rules-list p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
-
 @media (max-width: 700px) {
   .content { padding: 12px; }
   .header-inner { padding: 12px 12px 9px; }
   .clock-panel { display: block; }
   .next-picks { margin-top: 13px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); }
-  .draft-board { min-width: 760px; }
+  .tabs { overflow: hidden; }
+  .tab { flex: 1 1 0; min-width: 0; padding: 10px 6px 9px; text-align: center; }
+  .tab-label-wide { display: none; }
+  .tab-label-narrow { display: inline; }
+
+  .mobile-board-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+  .round-stepper { display: flex; align-items: center; gap: 7px; min-width: 0; }
+  .round-step-button { width: 34px; height: 34px; flex: 0 0 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text); font-size: 17px; font-weight: 800; cursor: pointer; }
+  .round-step-button:disabled { opacity: .35; cursor: default; }
+  .round-step-label { min-width: 76px; text-align: center; }
+  .round-step-label span, .round-step-label strong { display: block; }
+  .round-step-label span { font-family: var(--mono); color: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; }
+  .round-step-label strong { margin-top: 1px; font-size: 15px; line-height: 1.15; }
+  .round-step-label small { color: var(--muted); font-size: 10px; font-weight: 600; }
+
+  .mobile-round-view { display: grid; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); box-shadow: 0 1px 4px rgba(42,31,20,.08); }
+  .mobile-round-view.is-hidden { display: none; }
+  .mobile-pick-row { display: grid; grid-template-columns: 48px minmax(0,1fr) auto; gap: 10px; align-items: center; min-height: 72px; padding: 10px 11px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.08); }
+  .mobile-pick-row:last-child { border-bottom: 0; }
+  .mobile-pick-number { text-align: center; font-family: var(--mono); color: var(--muted); }
+  .mobile-pick-number strong, .mobile-pick-number span { display: block; }
+  .mobile-pick-number strong { color: var(--accent2); font-size: 13px; }
+  .mobile-pick-number span { margin-top: 2px; font-size: 8px; }
+  .mobile-pick-main { min-width: 0; }
+  .mobile-pick-main > span, .mobile-pick-main > strong { display: block; }
+  .mobile-pick-owner { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; }
+  .mobile-pick-main > strong { margin-top: 2px; font-size: 14px; line-height: 1.18; overflow-wrap: anywhere; }
+  .mobile-pick-main > strong + span { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.3; }
+  .mobile-pick-empty { margin-top: 5px; color: var(--border); font-size: 15px; }
+  .mobile-pick-state { max-width: 72px; color: var(--accent2); font-family: var(--mono); font-size: 8px; line-height: 1.25; text-align: right; }
+  .mobile-pick-state.owed { color: var(--red); }
+  .mobile-pick-row.pick-on_clock { background: rgba(196,85,8,.14); box-shadow: inset 0 0 0 2px var(--accent); }
+  .mobile-pick-row.pick-owed { background: rgba(184,50,50,.08); }
+
+  .desktop-board { display: none; }
+  .desktop-board.mobile-board-visible { display: block; }
+  .desktop-board .draft-board { min-width: 1560px; }
   .pick-cell { height: 86px; }
   .filter-grid { grid-template-columns: 1fr 1fr; }
   .filter-grid label:last-child { grid-column: span 2; }
