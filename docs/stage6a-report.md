@@ -60,7 +60,7 @@ The large automatic-universe CSV is retained as the exact Stage 6A conversation 
 
 The owner has now approved all **8** otherwise-single Torvik names that mapped to multiple ESPN players. Those decisions are recorded in `data/stage6a/owner-approved-mappings.csv`.
 
-The owner has additionally approved **10** duplicate-name groups after current-roster/history verification. The remaining unresolved population is **7 Torvik rows across 6 player names**, all from duplicate-name groups within the Torvik source.
+The owner subsequently approved the final **6** duplicate-name groups. The complete original review population — **31 Torvik rows across 24 player names** — is now dispositioned with **0 unresolved review rows**. Exact group-level decisions are recorded in `data/stage6a/final-review-dispositions.csv`.
 
 Two other repeated Torvik names — Jake Davis and Trent Perry — require no review because every repeated row carries a distinct valid ESPN ID.
 
@@ -99,8 +99,22 @@ The safe Stage 6 importer should therefore:
 
 This supersedes the earlier product-spec assumption that the imported pool is completely fixed after draft start.
 
+## Final reconciled universe
+
+The sealed Stage 6A master artifact is `stage6a_player_universe_final.csv`.
+
+- rows: **6,322**
+- SHA-256: `b59ec2cd479ea89e3fdf85399c5a5f26f76fb25442c39f59caa2fe4e52e1adae`
+- duplicate internal IDs: **0**
+- duplicate ESPN IDs: **0**
+- duplicate normalized Name + School: **0**
+- blank Name / School / Conference: **0 / 0 / 0**
+- database application: **NO**
+
+The final universe adds 10 identities to the 6,312-row automatic base: nine owner-approved no-ESPN-ID players and the recovered Memphis Jayden Reid ESPN identity `4895746`.
+
 ## Checkpoint
 
 Stage 6A stops here.
 
-No player data has been applied to D1 or wired into application setup. Eighteen review groups are owner-approved; the next bounded action is to adjudicate or otherwise disposition the remaining 6 duplicate-name groups, then regenerate and seal the reconciled universe before implementing ingestion/refresh behavior.
+No player data has been applied to D1 or wired into application setup. All 24 review groups are owner-approved. The reconciled universe has been regenerated and Stage 6A is COMPLETE. The next bounded stage is Stage 6B — validated ingestion/refresh implementation — and requires explicit owner approval before repository behavior or D1 setup changes.
