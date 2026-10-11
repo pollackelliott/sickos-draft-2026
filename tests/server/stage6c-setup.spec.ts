@@ -41,7 +41,7 @@ describe('Stage 6C real league setup', () => {
     expect(REAL_LEAGUE_OWNERS).toHaveLength(14);
     expect(REAL_LEAGUE_OWNERS.map((owner) => owner.name)).toEqual([
       'Chris Barbas',
-      'Connor Home',
+      'Connor Hope',
       'Connor Kraus',
       'Dan Labosky',
       'Elliott Pollack',
