@@ -2,6 +2,7 @@ import { DomainError, type DraftState } from '../domain/index.js';
 import { authenticateOwner } from './auth.js';
 import { D1DraftStore } from './d1-store.js';
 import { DraftService } from './service.js';
+import { PlayerUniverseImportError, refreshPlayerUniverseFromCsv } from './player-import.js';
 import type { D1Database } from './d1-types.js';
 import type { OwnerRecord } from './store-types.js';
 
@@ -230,6 +231,14 @@ export async function handleApi(request: Request, env: WorkerEnv): Promise<Respo
         return json({ draft: publicState(snapshot.state, snapshot.revision) });
       }
 
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/player-universe') {
+        const summary = await refreshPlayerUniverseFromCsv(env.DB, await request.text(), {
+          nowMs: Date.now(),
+          actorOwnerId: commissioner.id,
+        });
+        return json({ refresh: summary });
+      }
+
       if (request.method === 'POST' && url.pathname === '/api/commissioner/reset') {
         const body = await bodyJson<{ confirmation?: unknown }>(request);
         if (body?.confirmation !== 'RESET') {
@@ -290,6 +299,12 @@ export async function handleApi(request: Request, env: WorkerEnv): Promise<Respo
     return null;
   } catch (error) {
     if (error instanceof DomainError) return domainErrorResponse(error);
+    if (error instanceof PlayerUniverseImportError) {
+      return json(
+        { error: error.message, code: error.code },
+        { status: error.code === 'IDENTITY_CONFLICT' ? 409 : 400 },
+      );
+    }
     throw error;
   }
 }
