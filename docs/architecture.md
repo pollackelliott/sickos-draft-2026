@@ -136,3 +136,16 @@ The 14-manager provisional league configuration is compiled in `src/server/real-
 Pre-start owner/order editing is transactional and is allowed only while the draft lifecycle is `NOT_STARTED`. The update preserves the exact owner-ID set, codes, and commissioner flags, temporarily moves positions outside the unique 1..N range, applies the new names/order, then rewrites owner assignment on the existing immutable 252 snake-slot IDs. Historical slot IDs therefore remain stable.
 
 Once Start Draft changes the lifecycle, this setup path closes permanently for that active draft.
+
+
+## Stage 7 Cloudflare deployment adapter
+
+Production uses a single Cloudflare Worker plus Workers Static Assets. The Worker entrypoint delegates `/api/*` traffic to the established API layer and serves the React/Vite `dist/` output through the static-assets binding. Unknown API paths return JSON 404 and cannot fall through to the SPA.
+
+Wrangler configuration is generated into a gitignored root file from environment-supplied D1 identity. The repository therefore contains deployment structure but never the production D1 UUID or Cloudflare credentials.
+
+Real-league bootstrap is also generated outside Git. Stable owner/name/order settings come from the non-secret Stage 6C repository data, while the private owner-code CSV is supplied only at deploy time. The resulting SQL is gitignored and intentionally fails rather than overwriting an already initialized database.
+
+Initial player loading goes through the Stage 6B commissioner refresh endpoint and requires the sealed Stage 6A file hash by default.
+
+CI validates the deployable Worker bundle with Wrangler dry-run in addition to the existing typecheck, tests, and Vite build. Remote deployment proof remains a separate Stage 7 gate because it requires an authenticated Cloudflare account.
