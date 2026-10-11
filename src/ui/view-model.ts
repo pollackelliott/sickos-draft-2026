@@ -57,6 +57,24 @@ export function buildBoard(state: DraftState, allPlayers: Player[]): BoardRound[
   return rounds;
 }
 
+
+export function roundPicks(state: DraftState, allPlayers: Player[], round: number): BoardCell[] {
+  const owners = ownerMap(state);
+  const players = playerMap(allPlayers);
+  return state.slots
+    .filter((slot) => slot.round === round)
+    .sort((a, b) => a.roundPick - b.roundPick)
+    .map((slot) => {
+      const owner = owners.get(slot.ownerId);
+      if (!owner) throw new Error(`Missing owner ${slot.ownerId} for round ${round}`);
+      return {
+        owner,
+        slot,
+        player: slot.playerId ? players.get(slot.playerId) : undefined,
+      };
+    });
+}
+
 export function nextScheduledSlots(state: DraftState, count = 3): DraftSlot[] {
   const active = state.activeSlotId
     ? state.slots.find((slot) => slot.id === state.activeSlotId)
