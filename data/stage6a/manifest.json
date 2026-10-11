@@ -21,11 +21,11 @@
     "normalized_name_school_duplicates": 0
   },
   "review": {
-    "rows": 14,
-    "player_names": 11,
-    "torvik_duplicate_name_groups_requiring_review": 11,
+    "rows": 7,
+    "player_names": 6,
+    "torvik_duplicate_name_groups_requiring_review": 6,
     "single_torvik_names_with_ambiguous_espn_matches": 0,
-    "owner_approved_mappings": 13
+    "owner_approved_mappings": 18
   },
   "school_conference": {
     "torvik_schools": 364,
