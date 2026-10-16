@@ -84,6 +84,20 @@ describe('Stage 3 read-only view models', () => {
       { conference: 'SEC', filled: false },
       { conference: 'WCC', filled: false },
     ]);
+
+    const caseyChecklist = conferenceChecklist(
+      state,
+      draftedPlayers,
+      'casey',
+      ['WCC', 'ACC', 'Big Ten', 'SEC', 'Big 12'],
+    );
+    expect(caseyChecklist).toEqual([
+      { conference: 'ACC', filled: false },
+      { conference: 'Big 12', filled: false },
+      { conference: 'Big Ten', filled: false },
+      { conference: 'SEC', filled: true },
+      { conference: 'WCC', filled: false },
+    ]);
   });
 
   it('formats a compact countdown', () => {
