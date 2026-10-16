@@ -65,7 +65,7 @@ describe('Stage 3 read-only view models', () => {
     expect(rows[0].statusText).toContain('Drafted by Avery');
   });
 
-  it('builds team rosters and shows the full conference universe with filled slots first', () => {
+  it('builds team rosters and shows the full conference universe in consistent alphabetical order', () => {
     const state = makeDemoDraft(NOW);
     const draftedPlayers = demoPlayers.filter((player) => ['acc-1', 'b10-1', 'sec-1'].includes(player.id));
     const roster = rosterForOwner(state, draftedPlayers, 'avery');
