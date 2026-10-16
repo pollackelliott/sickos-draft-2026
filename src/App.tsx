@@ -90,7 +90,7 @@ export function App() {
         {!draft && !draftError && <p className="empty-state page-loading">Loading draft…</p>}
         {draft && page === 'Draft' && <DraftPage draft={draft} owner={owner} onGoPlayers={() => setPage('Players')} />}
         {draft && page === 'Players' && <PlayersPage draft={draft} owner={owner} code={code} onDraftChanged={(next) => { setDraft(next); setPage('Draft'); }} />}
-        {draft && page === 'Teams' && <TeamsPage draft={draft} />}
+        {draft && page === 'Teams' && <TeamsPage draft={draft} owner={owner} />}
         {draft && page === 'Commissioner' && owner?.isCommissioner && code && (
           <CommissionerPage draft={draft} code={code} onDraftChanged={setDraft} />
         )}
