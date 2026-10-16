@@ -1,13 +1,39 @@
 import { useEffect, useState } from 'react';
-import type { PublicDraft } from '../api/client';
+import { DraftApiClient, type PublicDraft, type SessionOwner } from '../api/client';
 import { conferenceChecklist, rosterForOwner } from './view-model';
 
-export function TeamsPage(props: { draft: PublicDraft }) {
-  const [ownerId, setOwnerId] = useState(props.draft.owners[0]?.id ?? '');
-  useEffect(() => { if (!props.draft.owners.some((owner) => owner.id === ownerId)) setOwnerId(props.draft.owners[0]?.id ?? ''); }, [ownerId, props.draft.owners]);
+const api = new DraftApiClient();
+
+export function TeamsPage(props: { draft: PublicDraft; owner: SessionOwner | null }) {
+  const [ownerId, setOwnerId] = useState(props.owner?.id ?? props.draft.owners[0]?.id ?? '');
+  const [conferenceUniverse, setConferenceUniverse] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (props.owner?.id) setOwnerId(props.owner.id);
+  }, [props.owner?.id]);
+
+  useEffect(() => {
+    if (!props.draft.owners.some((owner) => owner.id === ownerId)) {
+      setOwnerId(props.owner?.id ?? props.draft.owners[0]?.id ?? '');
+    }
+  }, [ownerId, props.draft.owners, props.owner?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void api.playerFilterOptions()
+      .then((options) => {
+        if (!cancelled) setConferenceUniverse(options.conferences);
+      })
+      .catch(() => {
+        if (!cancelled) setConferenceUniverse([]);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
   const roster = rosterForOwner(props.draft, props.draft.players, ownerId);
-  const checklist = conferenceChecklist(props.draft, props.draft.players, ownerId);
+  const checklist = conferenceChecklist(props.draft, props.draft.players, ownerId, conferenceUniverse);
   const owner = props.draft.owners.find((candidate) => candidate.id === ownerId);
+
   return (
     <section className="section-block">
       <div className="section-heading"><div><p className="kicker">Fantasy rosters</p><h2>Teams</h2></div></div>
@@ -16,4 +42,3 @@ export function TeamsPage(props: { draft: PublicDraft }) {
     </section>
   );
 }
-
