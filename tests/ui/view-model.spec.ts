@@ -65,13 +65,25 @@ describe('Stage 3 read-only view models', () => {
     expect(rows[0].statusText).toContain('Drafted by Avery');
   });
 
-  it('builds team rosters and conference checklists without duplicating player names', () => {
+  it('builds team rosters and shows the full conference universe with filled slots first', () => {
     const state = makeDemoDraft(NOW);
-    const roster = rosterForOwner(state, demoPlayers, 'avery');
-    const checklist = conferenceChecklist(state, demoPlayers, 'avery');
+    const draftedPlayers = demoPlayers.filter((player) => ['acc-1', 'b10-1', 'sec-1'].includes(player.id));
+    const roster = rosterForOwner(state, draftedPlayers, 'avery');
+    const checklist = conferenceChecklist(
+      state,
+      draftedPlayers,
+      'avery',
+      ['WCC', 'ACC', 'Big Ten', 'SEC', 'Big 12'],
+    );
+
     expect(roster.map((item) => item.player.id)).toEqual(['acc-1']);
-    expect(checklist.find((item) => item.conference === 'ACC')?.filled).toBe(true);
-    expect(checklist.find((item) => item.conference === 'Big Ten')?.filled).toBe(false);
+    expect(checklist).toEqual([
+      { conference: 'ACC', filled: true },
+      { conference: 'Big 12', filled: false },
+      { conference: 'Big Ten', filled: false },
+      { conference: 'SEC', filled: false },
+      { conference: 'WCC', filled: false },
+    ]);
   });
 
   it('formats a compact countdown', () => {
