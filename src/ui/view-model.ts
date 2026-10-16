@@ -171,10 +171,7 @@ export function conferenceChecklist(
   const filled = new Set(rosterForOwner(state, allPlayers, ownerId).map((item) => item.player.conference));
   return [...new Set([...conferenceUniverse, ...allPlayers.map((player) => player.conference)])]
     .map((conference) => ({ conference, filled: filled.has(conference) }))
-    .sort((a, b) => {
-      if (a.filled !== b.filled) return a.filled ? -1 : 1;
-      return a.conference.localeCompare(b.conference, 'en-US', { sensitivity: 'base' });
-    });
+    .sort((a, b) => a.conference.localeCompare(b.conference, 'en-US', { sensitivity: 'base' }));
 }
 
 export function formatCountdown(deadlineMs: number | null, nowMs: number): string {
