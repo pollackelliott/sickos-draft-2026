@@ -162,11 +162,19 @@ export function rosterForOwner(state: DraftState, allPlayers: Player[], ownerId:
     .filter((item): item is { slot: DraftSlot; player: Player } => Boolean(item.player));
 }
 
-export function conferenceChecklist(state: DraftState, allPlayers: Player[], ownerId: string) {
+export function conferenceChecklist(
+  state: DraftState,
+  allPlayers: Player[],
+  ownerId: string,
+  conferenceUniverse: string[] = [],
+) {
   const filled = new Set(rosterForOwner(state, allPlayers, ownerId).map((item) => item.player.conference));
-  return [...new Set(allPlayers.map((player) => player.conference))]
-    .sort((a, b) => a.localeCompare(b, 'en-US'))
-    .map((conference) => ({ conference, filled: filled.has(conference) }));
+  return [...new Set([...conferenceUniverse, ...allPlayers.map((player) => player.conference)])]
+    .map((conference) => ({ conference, filled: filled.has(conference) }))
+    .sort((a, b) => {
+      if (a.filled !== b.filled) return a.filled ? -1 : 1;
+      return a.conference.localeCompare(b.conference, 'en-US', { sensitivity: 'base' });
+    });
 }
 
 export function formatCountdown(deadlineMs: number | null, nowMs: number): string {
