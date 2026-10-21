@@ -18,6 +18,7 @@ export function PlayersPage(props: {
   const [conference, setConference] = useState('');
   const [school, setSchool] = useState('');
   const [availableOnly, setAvailableOnly] = useState(true);
+  const [draftedOnly, setDraftedOnly] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
   const [total, setTotal] = useState(0);
   const [options, setOptions] = useState({ conferences: [] as string[], schools: [] as string[] });
@@ -64,12 +65,21 @@ export function PlayersPage(props: {
 
   const selectedTarget = targets.find((slot) => slot.id === targetId) ?? defaultTarget;
   const draftedById = new Map(props.draft.slots.filter((slot) => slot.status === 'COMPLETE' && slot.playerId).map((slot) => [slot.playerId as string, slot]));
-  const visible = players.filter((player) => {
+  const visible = (draftedOnly ? props.draft.players : players).filter((player) => {
+    if (draftedOnly) {
+      if (!draftedById.has(player.id)) return false;
+      const normalizedSearch = search.trim().toLocaleLowerCase('en-US');
+      if (normalizedSearch && !player.name.toLocaleLowerCase('en-US').includes(normalizedSearch) && !player.school.toLocaleLowerCase('en-US').includes(normalizedSearch) && !player.conference.toLocaleLowerCase('en-US').includes(normalizedSearch)) return false;
+      if (conference && player.conference !== conference) return false;
+      if (school && player.school !== school) return false;
+      return true;
+    }
     if (!availableOnly) return true;
     if (draftedById.has(player.id)) return false;
     if (!props.owner) return true;
     return playerDraftability(props.draft, player, props.owner.id).available;
   });
+  const displayTotal = draftedOnly ? visible.length : total;
 
   async function submitPick() {
     if (!props.code || !confirmPlayer || !selectedTarget) return;
@@ -105,7 +115,7 @@ export function PlayersPage(props: {
 
   return (
     <section className="section-block">
-      <div className="section-heading"><div><p className="kicker">Player pool</p><h2>Players</h2></div><span className="badge">{total} matches</span></div>
+      <div className="section-heading"><div><p className="kicker">Player pool</p><h2>Players</h2></div><span className="badge">{displayTotal} matches</span></div>
 
       {targets.length > 0 && selectedTarget && (
         <div className="pick-action-panel">
@@ -122,12 +132,13 @@ export function PlayersPage(props: {
         <div className="filter-grid">
           <label><span>Conference</span><select value={conference} onChange={(event: { target: HTMLSelectElement }) => { setConference(event.target.value); setSchool(''); }}><option value="">All</option>{options.conferences.map((item) => <option key={item}>{item}</option>)}</select></label>
           <label><span>School</span><select value={school} onChange={(event: { target: HTMLSelectElement }) => setSchool(event.target.value)}><option value="">All</option>{options.schools.map((item) => <option key={item}>{item}</option>)}</select></label>
-          <label className="toggle-row inline-toggle"><input type="checkbox" checked={availableOnly} onChange={(event: { target: HTMLInputElement }) => setAvailableOnly(event.target.checked)} /><span>Available only</span></label>
+          <label className="toggle-row inline-toggle"><input type="checkbox" checked={availableOnly} onChange={(event: { target: HTMLInputElement }) => { setAvailableOnly(event.target.checked); if (event.target.checked) setDraftedOnly(false); }} /><span>Available only</span></label>
+          <label className="toggle-row inline-toggle"><input type="checkbox" checked={draftedOnly} onChange={(event: { target: HTMLInputElement }) => { setDraftedOnly(event.target.checked); if (event.target.checked) setAvailableOnly(false); }} /><span>Drafted only</span></label>
         </div>
       </div>
 
       {listError && <p className="form-error inline-error">{listError}</p>}
-      {loading ? <p className="empty-state">Loading players…</p> : (
+      {loading && !draftedOnly ? <p className="empty-state">Loading players…</p> : (
         <div className="player-list">
           {visible.map((player) => {
             const draftedSlot = draftedById.get(player.id);
