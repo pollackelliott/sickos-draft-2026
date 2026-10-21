@@ -1,0 +1,3 @@
+ALTER TABLE players
+ADD COLUMN selectable INTEGER NOT NULL DEFAULT 1
+CHECK (selectable IN (0, 1));

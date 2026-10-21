@@ -170,7 +170,7 @@ export class D1DraftStore {
 
   async getPlayer(playerId: string): Promise<Player | undefined> {
     const row = await this.db.prepare(
-      'SELECT id, name, school, conference, source FROM players WHERE id = ?',
+      'SELECT id, name, school, conference, source FROM players WHERE id = ? AND selectable = 1',
     ).bind(playerId).first<PlayerRow>();
     return row ? toPlayer(row) : undefined;
   }
@@ -214,14 +214,14 @@ export class D1DraftStore {
 
   async playerFilterOptions(conference?: string): Promise<{ conferences: string[]; schools: string[] }> {
     const conferenceRows = await this.db.prepare(
-      'SELECT DISTINCT conference FROM players ORDER BY conference COLLATE NOCASE',
+      'SELECT DISTINCT conference FROM players WHERE selectable = 1 ORDER BY conference COLLATE NOCASE',
     ).all<{ conference: string }>();
 
     const schoolStatement = conference?.trim()
       ? this.db.prepare(
-          'SELECT DISTINCT school FROM players WHERE conference = ? ORDER BY school COLLATE NOCASE',
+          'SELECT DISTINCT school FROM players WHERE selectable = 1 AND conference = ? ORDER BY school COLLATE NOCASE',
         ).bind(conference.trim())
-      : this.db.prepare('SELECT DISTINCT school FROM players ORDER BY school COLLATE NOCASE');
+      : this.db.prepare('SELECT DISTINCT school FROM players WHERE selectable = 1 ORDER BY school COLLATE NOCASE');
     const schoolRows = await schoolStatement.all<{ school: string }>();
 
     return {
@@ -231,7 +231,7 @@ export class D1DraftStore {
   }
 
   async searchPlayers(query: PlayerSearchQuery): Promise<PlayerSearchResult> {
-    const clauses: string[] = [];
+    const clauses: string[] = ['selectable = 1'];
     const values: unknown[] = [];
     if (query.search?.trim()) {
       clauses.push('normalized_name LIKE ?');

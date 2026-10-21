@@ -8,6 +8,7 @@ const HOUR = 60 * 60 * 1000;
 const migrationSql = [
   readFileSync(new URL('../../migrations/0001_initial.sql', import.meta.url), 'utf8'),
   readFileSync(new URL('../../migrations/0003_player_sort_name.sql', import.meta.url), 'utf8'),
+  readFileSync(new URL('../../migrations/0004_player_selectable.sql', import.meta.url), 'utf8'),
 ].join('\n');
 
 const owners: OwnerRecord[] = [
@@ -204,6 +205,60 @@ describe('D1 persistence', () => {
     expect(result.players[0].id).toBe('acc-1');
     const snapshot = await store.loadSnapshot();
     expect(snapshot.state.players.length).toBe(0);
+    db.close();
+  });
+
+
+  it('hides retired players from search and prevents new picks', async () => {
+    const { db, store, service } = await setup();
+
+    db.db.prepare(
+      `UPDATE players SET selectable = 0 WHERE id = 'acc-1'`,
+    ).run();
+
+    const result = await store.searchPlayers({ search: 'carter' });
+    expect(result.total).toBe(0);
+
+    await service.start(0);
+
+    await expect(service.pick({
+      ownerId: 'avery',
+      slotId: 'R1-P1',
+      playerId: 'acc-1',
+      nowMs: 1,
+    })).rejects.toMatchObject({
+      code: 'PLAYER_NOT_FOUND',
+    });
+
+    db.close();
+  });
+
+
+  it('preserves historical completed picks after a player is retired', async () => {
+    const { db, service } = await setup();
+
+    await service.start(0);
+    await service.pick({
+      ownerId: 'avery',
+      slotId: 'R1-P1',
+      playerId: 'acc-1',
+      nowMs: 1,
+    });
+
+    db.db.prepare(
+      `UPDATE players SET selectable = 0 WHERE id = 'acc-1'`,
+    ).run();
+
+    const reloaded = await new D1DraftStore(db).loadSnapshot();
+
+    expect(reloaded.state.slots[0].playerId).toBe('acc-1');
+    expect(reloaded.state.players.find((player) => player.id === 'acc-1')).toMatchObject({
+      id: 'acc-1',
+      name: 'Alex Carter',
+      school: 'North Metro',
+      conference: 'ACC',
+    });
+
     db.close();
   });
 });
