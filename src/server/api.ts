@@ -8,6 +8,7 @@ import {
   PlayerUniverseImportError,
   refreshPlayerUniverseFromCsv,
 } from './player-import.js';
+import { reconcilePlayerUniverseFromCsv } from './player-reconcile.js';
 import { updatePreDraftOwners } from './league-setup.js';
 import type { D1Database } from './d1-types.js';
 import type { OwnerRecord } from './store-types.js';
@@ -266,6 +267,26 @@ export async function handleApi(request: Request, env: WorkerEnv): Promise<Respo
         const incoming = parsePlayerUniverseCsv(await request.text());
         const plan = await planPlayerUniverseReconciliation(env.DB, incoming);
         return json({ plan });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/player-universe/reconcile') {
+        if (request.headers.get('x-player-universe-confirmation') !== 'RECONCILE') {
+          return json(
+            { error: 'Set x-player-universe-confirmation: RECONCILE to apply reconciliation.' },
+            { status: 400 },
+          );
+        }
+
+        const summary = await reconcilePlayerUniverseFromCsv(
+          env.DB,
+          await request.text(),
+          {
+            nowMs: Date.now(),
+            actorOwnerId: commissioner.id,
+          },
+        );
+
+        return json({ reconciliation: summary });
       }
 
       if (request.method === 'POST' && url.pathname === '/api/commissioner/player-universe') {

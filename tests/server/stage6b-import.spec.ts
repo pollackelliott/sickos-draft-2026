@@ -8,6 +8,7 @@ import {
   initializeDraft,
   parsePlayerUniverseCsv,
   planPlayerUniverseReconciliation,
+  reconcilePlayerUniverse,
   PlayerUniverseImportError,
   refreshPlayerUniverseFromCsv,
   type OwnerRecord,
@@ -344,6 +345,434 @@ describe('Stage 6B player-universe import', () => {
     expect(
       db.db.prepare(`SELECT selectable FROM players WHERE id = 'sec-1'`).get(),
     ).toEqual({ selectable: 0 });
+
+    db.close();
+  });
+
+
+  it('reconciles a stale ESPN duplicate into the existing Torvik identity without changing the surviving internal ID', async () => {
+    const { db } = await setup();
+
+    db.db.prepare(
+      `INSERT INTO players (
+         id, espn_id, name, school, conference,
+         normalized_name, normalized_school, sort_name,
+         source, selectable
+       ) VALUES
+       ('espn:900', '900', 'Old Name', 'Old School', 'ACC',
+        'old name', 'old school', 'name, old', 'IMPORTED', 1),
+       ('torvik:new', NULL, 'Current Name', 'Current School', 'Big Ten',
+        'current name', 'current school', 'name, current', 'IMPORTED', 1)`,
+    ).run();
+
+    const summary = await reconcilePlayerUniverse(db, [{
+      id: 'espn:900',
+      espnId: '900',
+      name: 'Current Name',
+      school: 'Current School',
+      conference: 'Big Ten',
+      year: 'SR',
+      position: 'G',
+      height: '6-4',
+      importStatus: null,
+    }], { nowMs: 100, actorOwnerId: 'avery' });
+
+    expect(summary.duplicateRecordsRemoved).toBe(1);
+    expect(summary.espnIdsAttached).toBe(1);
+
+    expect(
+      db.db.prepare(
+        `SELECT id, espn_id, name, school, conference
+           FROM players
+          WHERE id = 'torvik:new'`,
+      ).get(),
+    ).toEqual({
+      id: 'torvik:new',
+      espn_id: '900',
+      name: 'Current Name',
+      school: 'Current School',
+      conference: 'Big Ten',
+    });
+
+    expect(
+      db.db.prepare(`SELECT id FROM players WHERE id = 'espn:900'`).get(),
+    ).toBeUndefined();
+
+    db.close();
+  });
+
+  it('replaces a stale ESPN ID while preserving the existing internal player ID', async () => {
+    const { db } = await setup();
+
+    db.db.prepare(
+      `UPDATE players
+          SET espn_id = '111'
+        WHERE id = 'acc-1'`,
+    ).run();
+
+    const summary = await reconcilePlayerUniverse(db, [{
+      id: 'espn:222',
+      espnId: '222',
+      name: 'Alex Carter',
+      school: 'North Metro',
+      conference: 'ACC',
+      year: null,
+      position: null,
+      height: null,
+      importStatus: null,
+    }], { nowMs: 101, actorOwnerId: 'avery' });
+
+    expect(summary.espnIdsReplaced).toBe(1);
+
+    expect(
+      db.db.prepare(
+        `SELECT id, espn_id FROM players WHERE id = 'acc-1'`,
+      ).get(),
+    ).toEqual({
+      id: 'acc-1',
+      espn_id: '222',
+    });
+
+    expect(
+      db.db.prepare(`SELECT id FROM players WHERE id = 'espn:222'`).get(),
+    ).toBeUndefined();
+
+    db.close();
+  });
+
+  it('versions a history-bearing transferred player instead of rewriting historical identity', async () => {
+    const { db, service } = await setup();
+
+    db.db.prepare(
+      `UPDATE players
+          SET espn_id = '333'
+        WHERE id = 'acc-1'`,
+    ).run();
+
+    await service.start(0);
+    await service.pick({
+      ownerId: 'avery',
+      slotId: 'R1-P1',
+      playerId: 'acc-1',
+      nowMs: 1,
+    });
+    await service.correctPick({
+      slotId: 'R1-P1',
+      playerId: 'b10-1',
+      nowMs: 2,
+      actorOwnerId: 'avery',
+    });
+
+    const summary = await reconcilePlayerUniverse(db, [{
+      id: 'espn:333',
+      espnId: '333',
+      name: 'Alex Carter',
+      school: 'Transfer U',
+      conference: 'SEC',
+      year: 'SR',
+      position: 'G',
+      height: '6-5',
+      importStatus: null,
+    }], { nowMs: 102, actorOwnerId: 'avery' });
+
+    expect(summary.historicalTransfersVersioned).toBe(1);
+
+    expect(
+      db.db.prepare(
+        `SELECT id, espn_id, school, conference, selectable
+           FROM players
+          WHERE id = 'acc-1'`,
+      ).get(),
+    ).toEqual({
+      id: 'acc-1',
+      espn_id: null,
+      school: 'North Metro',
+      conference: 'ACC',
+      selectable: 0,
+    });
+
+    const current = db.db.prepare(
+      `SELECT id, espn_id, school, conference, selectable
+         FROM players
+        WHERE espn_id = '333'`,
+    ).get() as Record<string, unknown>;
+
+    expect(current).toMatchObject({
+      espn_id: '333',
+      school: 'Transfer U',
+      conference: 'SEC',
+      selectable: 1,
+    });
+    expect(current.id).not.toBe('acc-1');
+
+    expect(
+      db.db.prepare(
+        `SELECT COUNT(*) AS total
+           FROM draft_events
+          WHERE player_id = 'acc-1'`,
+      ).get(),
+    ).toEqual({ total: 1 });
+
+    db.close();
+  });
+
+  it('does not rewrite a currently drafted protected player', async () => {
+    const { db, service } = await setup();
+
+    db.db.prepare(
+      `UPDATE players
+          SET espn_id = '444'
+        WHERE id = 'acc-1'`,
+    ).run();
+
+    await service.start(0);
+    await service.pick({
+      ownerId: 'avery',
+      slotId: 'R1-P1',
+      playerId: 'acc-1',
+      nowMs: 1,
+    });
+
+    const summary = await reconcilePlayerUniverse(db, [{
+      id: 'espn:444',
+      espnId: '444',
+      name: 'Alex Carter',
+      school: 'Transfer U',
+      conference: 'SEC',
+      year: null,
+      position: null,
+      height: null,
+      importStatus: null,
+    }], { nowMs: 103, actorOwnerId: 'avery' });
+
+    expect(summary.protectedRowsSkipped).toBe(1);
+    expect(summary.historicalTransfersVersioned).toBe(0);
+
+    expect(
+      db.db.prepare(
+        `SELECT school, conference, selectable
+           FROM players
+          WHERE id = 'acc-1'`,
+      ).get(),
+    ).toEqual({
+      school: 'North Metro',
+      conference: 'ACC',
+      selectable: 1,
+    });
+
+    db.close();
+  });
+
+  it('preserves imported players omitted from the incoming universe', async () => {
+    const { db } = await setup();
+
+    const before = db.db.prepare(
+      `SELECT id, name, school, conference
+         FROM players
+        ORDER BY id`,
+    ).all();
+
+    const summary = await reconcilePlayerUniverse(db, [{
+      id: 'acc-1',
+      espnId: null,
+      name: 'Alex Carter',
+      school: 'North Metro',
+      conference: 'ACC',
+      year: null,
+      position: null,
+      height: null,
+      importStatus: null,
+    }], { nowMs: 104, actorOwnerId: 'avery' });
+
+    expect(summary.omissionsPreserved).toBe(3);
+
+    const after = db.db.prepare(
+      `SELECT id, name, school, conference
+         FROM players
+        ORDER BY id`,
+    ).all();
+
+    expect(after).toEqual(before);
+
+    db.close();
+  });
+
+
+  it('reconciles more than one thousand rows across JSON bulk chunks', async () => {
+    const { db } = await setup();
+
+    const incoming = Array.from({ length: 1_205 }, (_, index) => ({
+      id: `espn:${8000000 + index}`,
+      espnId: String(8000000 + index),
+      name: `Bulk Player ${index}`,
+      school: `Bulk School ${index}`,
+      conference: 'Bulk Conference',
+      year: 'FR',
+      position: 'G',
+      height: '6-0',
+      importStatus: null,
+    }));
+
+    const summary = await reconcilePlayerUniverse(
+      db,
+      incoming,
+      { nowMs: 105, actorOwnerId: 'avery' },
+    );
+
+    expect(summary.inserted).toBe(1_205);
+
+    expect(
+      db.db.prepare(
+        `SELECT COUNT(*) AS total
+           FROM players
+          WHERE id LIKE 'espn:8%'`,
+      ).get(),
+    ).toEqual({ total: 1_205 });
+
+    expect(
+      db.db.prepare(
+        `SELECT id, espn_id, name
+           FROM players
+          WHERE id = 'espn:8001204'`,
+      ).get(),
+    ).toEqual({
+      id: 'espn:8001204',
+      espn_id: '8001204',
+      name: 'Bulk Player 1204',
+    });
+
+    db.close();
+  });
+
+
+  it('requires explicit confirmation before the reconciliation apply API can mutate players', async () => {
+    const { db } = await setup();
+
+    const body = [
+      'internal_id,espn_id,name,school,conference,year,position,height,source_status',
+      'acc-1,111,Alex Carter,North Metro,ACC,Sr,G,6-5,TORVIK_ESPN_ID',
+      '',
+    ].join('\n');
+
+    const before = db.db.prepare(
+      `SELECT id, espn_id
+         FROM players
+        WHERE id = 'acc-1'`,
+    ).get();
+
+    const response = await handleApi(
+      new Request(
+        'https://example.test/api/commissioner/player-universe/reconcile',
+        {
+          method: 'POST',
+          headers: {
+            'x-league-code': 'BLUE42',
+            'content-type': 'text/csv',
+          },
+          body,
+        },
+      ),
+      { DB: db },
+    );
+
+    expect(response?.status).toBe(400);
+
+    const after = db.db.prepare(
+      `SELECT id, espn_id
+         FROM players
+        WHERE id = 'acc-1'`,
+    ).get();
+
+    expect(after).toEqual(before);
+
+    db.close();
+  });
+
+  it('requires commissioner identity for the reconciliation apply API', async () => {
+    const { db } = await setup();
+
+    const body = [
+      'internal_id,espn_id,name,school,conference,year,position,height,source_status',
+      'acc-1,111,Alex Carter,North Metro,ACC,Sr,G,6-5,TORVIK_ESPN_ID',
+      '',
+    ].join('\n');
+
+    const response = await handleApi(
+      new Request(
+        'https://example.test/api/commissioner/player-universe/reconcile',
+        {
+          method: 'POST',
+          headers: {
+            'x-league-code': 'TIGER81',
+            'x-player-universe-confirmation': 'RECONCILE',
+            'content-type': 'text/csv',
+          },
+          body,
+        },
+      ),
+      { DB: db },
+    );
+
+    expect(response?.status).toBe(403);
+
+    expect(
+      db.db.prepare(
+        `SELECT espn_id
+           FROM players
+          WHERE id = 'acc-1'`,
+      ).get(),
+    ).toEqual({ espn_id: null });
+
+    db.close();
+  });
+
+  it('applies reconciliation through the guarded commissioner API', async () => {
+    const { db } = await setup();
+
+    const body = [
+      'internal_id,espn_id,name,school,conference,year,position,height,source_status',
+      'acc-1,111,Alex Carter,North Metro,ACC,Sr,G,6-5,TORVIK_ESPN_ID',
+      '',
+    ].join('\n');
+
+    const response = await handleApi(
+      new Request(
+        'https://example.test/api/commissioner/player-universe/reconcile',
+        {
+          method: 'POST',
+          headers: {
+            'x-league-code': 'BLUE42',
+            'x-player-universe-confirmation': 'RECONCILE',
+            'content-type': 'text/csv',
+          },
+          body,
+        },
+      ),
+      { DB: db },
+    );
+
+    expect(response?.status).toBe(200);
+
+    const payload = await response?.json() as {
+      reconciliation: {
+        incomingRows: number;
+        safeUpdates: number;
+      };
+    };
+
+    expect(payload.reconciliation.incomingRows).toBe(1);
+    expect(payload.reconciliation.safeUpdates).toBe(1);
+
+    expect(
+      db.db.prepare(
+        `SELECT id, espn_id
+           FROM players
+          WHERE id = 'acc-1'`,
+      ).get(),
+    ).toEqual({
+      id: 'acc-1',
+      espn_id: '111',
+    });
 
     db.close();
   });

@@ -22,6 +22,14 @@ export type {
   PlayerUniverseRefreshOptions,
   PlayerUniverseRefreshSummary,
 } from './player-import.js';
+export {
+  reconcilePlayerUniverse,
+  reconcilePlayerUniverseFromCsv,
+} from './player-reconcile.js';
+export type {
+  PlayerUniverseReconciliationApplyOptions,
+  PlayerUniverseReconciliationApplySummary,
+} from './player-reconcile.js';
 export { updatePreDraftOwners } from './league-setup.js';
 export type { PreDraftOwnerUpdate, PreDraftOwnerUpdateSummary } from './league-setup.js';
 export { REAL_LEAGUE_CLOCK_DURATION_MS, REAL_LEAGUE_OWNERS, REAL_LEAGUE_ROUNDS, buildRealLeagueOwners } from './real-league-config.js';
