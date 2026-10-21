@@ -48,6 +48,7 @@ export interface PlayerUniverseRefreshSummary {
 export type PlayerUniverseReconciliationAction =
   | 'UNCHANGED'
   | 'UPDATE_SAFE'
+  | 'NAME_MISMATCH_REVIEW'
   | 'UPDATE_PROTECTED_REVIEW'
   | 'ATTACH_ESPN_ID'
   | 'ATTACH_ESPN_ID_PROTECTED'
@@ -477,6 +478,11 @@ export async function planPlayerUniverseReconciliation(
         continue;
       }
 
+      if (sameId.name !== row.name) {
+        push('NAME_MISMATCH_REVIEW', sameId, row);
+        continue;
+      }
+
       if (sameIncomingMetadata(sameId, row)) {
         push('UNCHANGED', sameId, row);
         continue;
@@ -510,6 +516,11 @@ export async function planPlayerUniverseReconciliation(
 
       if (sameEspn.selectable === 0) {
         push('RETIRED_REVIEW', sameEspn, row);
+        continue;
+      }
+
+      if (sameEspn.name !== row.name) {
+        push('NAME_MISMATCH_REVIEW', sameEspn, row);
         continue;
       }
 
@@ -582,6 +593,7 @@ export async function planPlayerUniverseReconciliation(
   const actions: PlayerUniverseReconciliationAction[] = [
     'UNCHANGED',
     'UPDATE_SAFE',
+    'NAME_MISMATCH_REVIEW',
     'UPDATE_PROTECTED_REVIEW',
     'ATTACH_ESPN_ID',
     'ATTACH_ESPN_ID_PROTECTED',

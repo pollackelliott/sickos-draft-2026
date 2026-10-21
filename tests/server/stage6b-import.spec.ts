@@ -350,6 +350,144 @@ describe('Stage 6B player-universe import', () => {
   });
 
 
+
+  it('plans a changed ESPN name for review instead of silently replacing an existing player', async () => {
+    const { db } = await setup();
+
+    db.db.prepare(
+      `UPDATE players
+          SET espn_id = '777',
+              year = 'JR',
+              position = 'F',
+              height = '6-8'
+        WHERE id = 'acc-1'`,
+    ).run();
+
+    const plan = await planPlayerUniverseReconciliation(db, [{
+      id: 'espn:777',
+      espnId: '777',
+      name: 'Completely Different Name',
+      school: 'Transfer U',
+      conference: 'SEC',
+      year: 'SR',
+      position: 'C',
+      height: '6-10',
+      importStatus: null,
+    }]);
+
+    expect(plan.counts.NAME_MISMATCH_REVIEW).toBe(1);
+
+    const item = plan.items.find(
+      (candidate) => candidate.action === 'NAME_MISMATCH_REVIEW',
+    );
+
+    expect(item).toMatchObject({
+      storedId: 'acc-1',
+      espnId: '777',
+      name: 'Completely Different Name',
+    });
+
+    db.close();
+  });
+
+  it('preserves canonical existing name and metadata while applying a safe roster transfer', async () => {
+    const { db } = await setup();
+
+    db.db.prepare(
+      `UPDATE players
+          SET espn_id = '778',
+              year = 'JR',
+              position = 'F',
+              height = '6-8',
+              import_status = 'CANONICAL_EXISTING'
+        WHERE id = 'acc-1'`,
+    ).run();
+
+    const summary = await reconcilePlayerUniverse(db, [{
+      id: 'espn:778',
+      espnId: '778',
+      name: 'Alex Carter',
+      school: 'Transfer U',
+      conference: 'SEC',
+      year: 'SR',
+      position: 'C',
+      height: '6-10',
+      importStatus: null,
+    }], { nowMs: 106, actorOwnerId: 'avery' });
+
+    expect(summary.safeUpdates).toBe(1);
+
+    expect(
+      db.db.prepare(
+        `SELECT
+           id,
+           espn_id,
+           name,
+           school,
+           conference,
+           year,
+           position,
+           height,
+           import_status
+         FROM players
+         WHERE id = 'acc-1'`,
+      ).get(),
+    ).toEqual({
+      id: 'acc-1',
+      espn_id: '778',
+      name: 'Alex Carter',
+      school: 'Transfer U',
+      conference: 'SEC',
+      year: 'JR',
+      position: 'F',
+      height: '6-8',
+      import_status: 'CANONICAL_EXISTING',
+    });
+
+    db.close();
+  });
+
+  it('does not mutate an existing player when the same ESPN ID arrives with a different name', async () => {
+    const { db } = await setup();
+
+    db.db.prepare(
+      `UPDATE players
+          SET espn_id = '779'
+        WHERE id = 'acc-1'`,
+    ).run();
+
+    const before = db.db.prepare(
+      `SELECT id, espn_id, name, school, conference
+         FROM players
+        WHERE id = 'acc-1'`,
+    ).get();
+
+    const summary = await reconcilePlayerUniverse(db, [{
+      id: 'espn:779',
+      espnId: '779',
+      name: 'Another Human',
+      school: 'Transfer U',
+      conference: 'SEC',
+      year: 'SR',
+      position: 'G',
+      height: '6-4',
+      importStatus: null,
+    }], { nowMs: 107, actorOwnerId: 'avery' });
+
+    expect(summary.nameMismatchesPreserved).toBe(1);
+    expect(summary.safeUpdates).toBe(0);
+
+    const after = db.db.prepare(
+      `SELECT id, espn_id, name, school, conference
+         FROM players
+        WHERE id = 'acc-1'`,
+    ).get();
+
+    expect(after).toEqual(before);
+
+    db.close();
+  });
+
   it('reconciles a stale ESPN duplicate into the existing Torvik identity without changing the surviving internal ID', async () => {
     const { db } = await setup();
 

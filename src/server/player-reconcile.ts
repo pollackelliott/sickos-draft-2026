@@ -42,6 +42,7 @@ export interface PlayerUniverseReconciliationApplySummary {
   duplicateRecordsRemoved: number;
   espnIdsReplaced: number;
   historicalTransfersVersioned: number;
+  nameMismatchesPreserved: number;
   protectedRowsSkipped: number;
   retiredRowsPreserved: number;
   omissionsPreserved: number;
@@ -68,6 +69,23 @@ function canonicalRow(
     ...incoming,
     id,
     importStatus: incoming.importStatus ?? prior?.import_status ?? null,
+  };
+}
+
+function preserveExistingCanonicalData(
+  incoming: ImportedPlayerRecord,
+  stored: StoredRow,
+): ImportedPlayerRecord {
+  return {
+    id: stored.id,
+    espnId: incoming.espnId ?? stored.espn_id,
+    name: stored.name,
+    school: incoming.school,
+    conference: incoming.conference,
+    year: stored.year,
+    position: stored.position,
+    height: stored.height,
+    importStatus: stored.import_status,
   };
 }
 
@@ -210,6 +228,7 @@ export async function reconcilePlayerUniverse(
   let duplicateRecordsRemoved = 0;
   let espnIdsReplaced = 0;
   let historicalTransfersVersioned = 0;
+  let nameMismatchesPreserved = 0;
   let protectedRowsSkipped = 0;
   let retiredRowsPreserved = 0;
   let omissionsPreserved = 0;
@@ -230,7 +249,9 @@ export async function reconcilePlayerUniverse(
         if (!incomingRow || !stored || stored.referenced) {
           throw new Error(`Unsafe UPDATE_SAFE plan item for ${item.name}.`);
         }
-        ordinaryRows.push(canonicalRow(incomingRow, stored.id, stored));
+        ordinaryRows.push(
+          preserveExistingCanonicalData(incomingRow, stored),
+        );
         safeUpdates += 1;
         break;
       }
@@ -239,7 +260,9 @@ export async function reconcilePlayerUniverse(
         if (!incomingRow || !stored || stored.referenced) {
           throw new Error(`Unsafe ATTACH_ESPN_ID plan item for ${item.name}.`);
         }
-        ordinaryRows.push(canonicalRow(incomingRow, stored.id, stored));
+        ordinaryRows.push(
+          preserveExistingCanonicalData(incomingRow, stored),
+        );
         espnIdsAttached += 1;
         break;
       }
@@ -296,7 +319,7 @@ export async function reconcilePlayerUniverse(
 
           deleteIds.add(espnOwner.id);
           ordinaryRows.push(
-            canonicalRow(incomingRow, identityOwner.id, identityOwner),
+            preserveExistingCanonicalData(incomingRow, identityOwner),
           );
           duplicateRecordsRemoved += 1;
           espnIdsAttached += 1;
@@ -316,7 +339,7 @@ export async function reconcilePlayerUniverse(
           }
 
           ordinaryRows.push(
-            canonicalRow(incomingRow, identityOwner.id, identityOwner),
+            preserveExistingCanonicalData(incomingRow, identityOwner),
           );
           espnIdsReplaced += 1;
           break;
@@ -326,6 +349,10 @@ export async function reconcilePlayerUniverse(
           `Unrecognized identity conflict shape for ${item.name}.`,
         );
       }
+
+      case 'NAME_MISMATCH_REVIEW':
+        nameMismatchesPreserved += 1;
+        break;
 
       case 'UPDATE_PROTECTED_REVIEW': {
         if (!incomingRow || !stored || !stored.referenced) {
@@ -432,6 +459,7 @@ export async function reconcilePlayerUniverse(
     duplicateRecordsRemoved,
     espnIdsReplaced,
     historicalTransfersVersioned,
+    nameMismatchesPreserved,
     protectedRowsSkipped,
     retiredRowsPreserved,
     omissionsPreserved,
