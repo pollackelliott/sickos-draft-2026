@@ -45,6 +45,41 @@ export interface PlayerUniverseRefreshSummary {
   finalPlayerCount: number;
 }
 
+export type PlayerUniverseReconciliationAction =
+  | 'UNCHANGED'
+  | 'UPDATE_SAFE'
+  | 'UPDATE_PROTECTED_REVIEW'
+  | 'ATTACH_ESPN_ID'
+  | 'ATTACH_ESPN_ID_PROTECTED'
+  | 'INSERT'
+  | 'WRITE_IN_COLLISION'
+  | 'IDENTITY_CONFLICT_REVIEW'
+  | 'RETIRED_REVIEW'
+  | 'OMISSION_REVIEW'
+  | 'OMISSION_PROTECTED';
+
+export interface PlayerUniverseReconciliationItem {
+  action: PlayerUniverseReconciliationAction;
+  storedId: string | null;
+  incomingId: string | null;
+  espnId: string | null;
+  name: string;
+  storedSchool: string | null;
+  incomingSchool: string | null;
+  storedConference: string | null;
+  incomingConference: string | null;
+  source: 'IMPORTED' | 'WRITE_IN' | null;
+  referenced: boolean;
+  selectable: boolean | null;
+}
+
+export interface PlayerUniverseReconciliationPlan {
+  incomingRows: number;
+  existingRows: number;
+  counts: Record<PlayerUniverseReconciliationAction, number>;
+  items: PlayerUniverseReconciliationItem[];
+}
+
 export interface PlayerUniverseRefreshOptions {
   nowMs: number;
   actorOwnerId?: string | null;
@@ -64,6 +99,7 @@ interface StoredPlayerRow {
   height: string | null;
   import_status: string | null;
   referenced: number;
+  selectable?: number;
 }
 
 function requireRows<T>(result: D1Result<T>): T[] {
@@ -140,12 +176,14 @@ const HEADER_ALIASES: Record<string, keyof ImportedPlayerRecord | 'ignore'> = {
   internal_id: 'id',
   id: 'id',
   espn_id: 'espnId',
+  player_id: 'espnId',
   name: 'name',
   player: 'name',
   school: 'school',
   conference: 'conference',
   year: 'year',
   yr: 'year',
+  class: 'year',
   position: 'position',
   height: 'height',
   source_status: 'importStatus',
@@ -332,6 +370,242 @@ function makeBulkUpsert(
        AND NOT EXISTS (SELECT 1 FROM draft_slots s WHERE s.player_id = players.id)
        AND NOT EXISTS (SELECT 1 FROM draft_events e WHERE e.player_id = players.id)`,
   ).bind(...values);
+}
+
+
+function storedIdentityKey(row: StoredPlayerRow): string {
+  return `${row.normalized_name}\u0000${row.normalized_school}`;
+}
+
+function sameIncomingMetadata(
+  existing: StoredPlayerRow,
+  incoming: ImportedPlayerRecord,
+): boolean {
+  return (
+    existing.espn_id === incoming.espnId &&
+    existing.name === incoming.name &&
+    existing.school === incoming.school &&
+    existing.conference === incoming.conference &&
+    existing.year === incoming.year &&
+    existing.position === incoming.position &&
+    existing.height === incoming.height &&
+    existing.import_status === incoming.importStatus
+  );
+}
+
+export async function planPlayerUniverseReconciliation(
+  db: D1Database,
+  incoming: ImportedPlayerRecord[],
+): Promise<PlayerUniverseReconciliationPlan> {
+  const storedResult = await db.prepare(
+    `SELECT p.id, p.espn_id, p.name, p.school, p.conference,
+            p.normalized_name, p.normalized_school, p.source,
+            p.year, p.position, p.height, p.import_status, p.selectable,
+            CASE WHEN
+              EXISTS (SELECT 1 FROM draft_slots s WHERE s.player_id = p.id)
+              OR EXISTS (SELECT 1 FROM draft_events e WHERE e.player_id = p.id)
+            THEN 1 ELSE 0 END AS referenced
+       FROM players p`,
+  ).all<StoredPlayerRow>();
+
+  const existing = requireRows(storedResult);
+
+  const existingById = new Map(
+    existing.map((row) => [row.id, row]),
+  );
+
+  const existingByEspn = new Map(
+    existing
+      .filter((row) => row.espn_id)
+      .map((row) => [row.espn_id as string, row]),
+  );
+
+  const existingByIdentity = new Map(
+    existing.map((row) => [
+      `${row.normalized_name}\u0000${row.normalized_school}`,
+      row,
+    ]),
+  );
+
+  const matchedStoredIds = new Set<string>();
+  const items: PlayerUniverseReconciliationItem[] = [];
+
+  const push = (
+    action: PlayerUniverseReconciliationAction,
+    stored: StoredPlayerRow | null,
+    row: ImportedPlayerRecord | null,
+  ) => {
+    items.push({
+      action,
+      storedId: stored?.id ?? null,
+      incomingId: row?.id ?? null,
+      espnId: row?.espnId ?? stored?.espn_id ?? null,
+      name: row?.name ?? stored?.name ?? '',
+      storedSchool: stored?.school ?? null,
+      incomingSchool: row?.school ?? null,
+      storedConference: stored?.conference ?? null,
+      incomingConference: row?.conference ?? null,
+      source: stored?.source ?? null,
+      referenced: stored?.referenced === 1,
+      selectable: stored?.selectable == null ? null : stored.selectable === 1,
+    });
+  };
+
+  for (const row of incoming) {
+    const sameId = existingById.get(row.id);
+
+    if (sameId) {
+      matchedStoredIds.add(sameId.id);
+
+      const espnOwner = row.espnId
+        ? existingByEspn.get(row.espnId)
+        : undefined;
+      const identityOwner = existingByIdentity.get(
+        identityKey(row.name, row.school),
+      );
+
+      if (
+        (espnOwner && espnOwner.id !== sameId.id)
+        || (identityOwner && identityOwner.id !== sameId.id)
+      ) {
+        push('IDENTITY_CONFLICT_REVIEW', sameId, row);
+        continue;
+      }
+
+      if (sameId.selectable === 0) {
+        push('RETIRED_REVIEW', sameId, row);
+        continue;
+      }
+
+      if (sameIncomingMetadata(sameId, row)) {
+        push('UNCHANGED', sameId, row);
+        continue;
+      }
+
+      push(
+        sameId.referenced
+          ? 'UPDATE_PROTECTED_REVIEW'
+          : 'UPDATE_SAFE',
+        sameId,
+        row,
+      );
+      continue;
+    }
+
+    const sameEspn = row.espnId
+      ? existingByEspn.get(row.espnId)
+      : undefined;
+
+    if (sameEspn) {
+      matchedStoredIds.add(sameEspn.id);
+
+      const identityOwner = existingByIdentity.get(
+        identityKey(row.name, row.school),
+      );
+
+      if (identityOwner && identityOwner.id !== sameEspn.id) {
+        push('IDENTITY_CONFLICT_REVIEW', sameEspn, row);
+        continue;
+      }
+
+      if (sameEspn.selectable === 0) {
+        push('RETIRED_REVIEW', sameEspn, row);
+        continue;
+      }
+
+      if (sameIncomingMetadata(sameEspn, row)) {
+        push('UNCHANGED', sameEspn, row);
+        continue;
+      }
+
+      push(
+        sameEspn.referenced
+          ? 'UPDATE_PROTECTED_REVIEW'
+          : 'UPDATE_SAFE',
+        sameEspn,
+        row,
+      );
+      continue;
+    }
+
+    const sameIdentity = existingByIdentity.get(
+      identityKey(row.name, row.school),
+    );
+
+    if (sameIdentity) {
+      matchedStoredIds.add(sameIdentity.id);
+
+      if (sameIdentity.selectable === 0) {
+        push('RETIRED_REVIEW', sameIdentity, row);
+        continue;
+      }
+
+      if (sameIdentity.source === 'WRITE_IN') {
+        push('WRITE_IN_COLLISION', sameIdentity, row);
+        continue;
+      }
+
+      if (
+        sameIdentity.espn_id &&
+        sameIdentity.espn_id !== row.espnId
+      ) {
+        push('IDENTITY_CONFLICT_REVIEW', sameIdentity, row);
+        continue;
+      }
+
+      push(
+        sameIdentity.referenced
+          ? 'ATTACH_ESPN_ID_PROTECTED'
+          : 'ATTACH_ESPN_ID',
+        sameIdentity,
+        row,
+      );
+      continue;
+    }
+
+    push('INSERT', null, row);
+  }
+
+  for (const stored of existing) {
+    if (stored.source !== 'IMPORTED') continue;
+    if (matchedStoredIds.has(stored.id)) continue;
+
+    push(
+      stored.referenced
+        ? 'OMISSION_PROTECTED'
+        : 'OMISSION_REVIEW',
+      stored,
+      null,
+    );
+  }
+
+  const actions: PlayerUniverseReconciliationAction[] = [
+    'UNCHANGED',
+    'UPDATE_SAFE',
+    'UPDATE_PROTECTED_REVIEW',
+    'ATTACH_ESPN_ID',
+    'ATTACH_ESPN_ID_PROTECTED',
+    'INSERT',
+    'WRITE_IN_COLLISION',
+    'IDENTITY_CONFLICT_REVIEW',
+    'RETIRED_REVIEW',
+    'OMISSION_REVIEW',
+    'OMISSION_PROTECTED',
+  ];
+
+  const counts = Object.fromEntries(
+    actions.map((action) => [
+      action,
+      items.filter((item) => item.action === action).length,
+    ]),
+  ) as Record<PlayerUniverseReconciliationAction, number>;
+
+  return {
+    incomingRows: incoming.length,
+    existingRows: existing.length,
+    counts,
+    items,
+  };
 }
 
 export async function refreshPlayerUniverse(

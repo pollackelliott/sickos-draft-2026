@@ -2,7 +2,12 @@ import { DomainError, type DraftState } from '../domain/index.js';
 import { authenticateOwner } from './auth.js';
 import { D1DraftStore } from './d1-store.js';
 import { DraftService } from './service.js';
-import { PlayerUniverseImportError, refreshPlayerUniverseFromCsv } from './player-import.js';
+import {
+  parsePlayerUniverseCsv,
+  planPlayerUniverseReconciliation,
+  PlayerUniverseImportError,
+  refreshPlayerUniverseFromCsv,
+} from './player-import.js';
 import { updatePreDraftOwners } from './league-setup.js';
 import type { D1Database } from './d1-types.js';
 import type { OwnerRecord } from './store-types.js';
@@ -255,6 +260,12 @@ export async function handleApi(request: Request, env: WorkerEnv): Promise<Respo
           actorOwnerId: commissioner.id,
         });
         return json({ setup: summary });
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/commissioner/player-universe/plan') {
+        const incoming = parsePlayerUniverseCsv(await request.text());
+        const plan = await planPlayerUniverseReconciliation(env.DB, incoming);
+        return json({ plan });
       }
 
       if (request.method === 'POST' && url.pathname === '/api/commissioner/player-universe') {

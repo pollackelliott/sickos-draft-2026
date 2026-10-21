@@ -7,6 +7,7 @@ import {
   handleApi,
   initializeDraft,
   parsePlayerUniverseCsv,
+  planPlayerUniverseReconciliation,
   PlayerUniverseImportError,
   refreshPlayerUniverseFromCsv,
   type OwnerRecord,
@@ -48,6 +49,26 @@ function csv(rows: string[]): string {
 }
 
 describe('Stage 6B player-universe import', () => {
+  it('parses the October ESPN export format with player_id as durable ESPN identity', () => {
+    const parsed = parsePlayerUniverseCsv([
+      'player_id,number,name,position,height,weight,class,hometown,School,Conference',
+      '5176569,0,Vasean Allette,G,6-3,180 lbs,SR,Toronto ON,Long Island University,NEC',
+      '',
+    ].join('\n'));
+
+    expect(parsed).toEqual([{
+      id: 'espn:5176569',
+      espnId: '5176569',
+      name: 'Vasean Allette',
+      school: 'Long Island University',
+      conference: 'NEC',
+      year: 'SR',
+      position: 'G',
+      height: '6-3',
+      importStatus: null,
+    }]);
+  });
+
   it('parses quoted canonical CSV and rejects missing durable identity', () => {
     const parsed = parsePlayerUniverseCsv(csv([
       'espn:123,123,"Doe, John","North ""Metro""",ACC,Sr,G,"6\' 4""",TORVIK_ESPN_ID',
@@ -176,6 +197,217 @@ describe('Stage 6B player-universe import', () => {
 
     expect(db.db.prepare(`SELECT id FROM players WHERE id = 'acc-1'`).get()).toBeTruthy();
     expect(db.db.prepare(`SELECT id FROM players WHERE id = 'different-id'`).get()).toBeUndefined();
+    db.close();
+  });
+
+
+  it('plans safe and protected ESPN identity attachments without mutating players', async () => {
+    const { db, service } = await setup();
+
+    await service.start(0);
+    await service.pick({
+      ownerId: 'avery',
+      slotId: 'R1-P1',
+      playerId: 'acc-1',
+      nowMs: 1,
+    });
+
+    const before = db.db.prepare(
+      `SELECT id, espn_id, name, school, conference
+         FROM players
+        ORDER BY id`,
+    ).all();
+
+    const plan = await planPlayerUniverseReconciliation(db, [
+      {
+        id: 'espn:100',
+        espnId: '100',
+        name: 'Alex Carter',
+        school: 'North Metro',
+        conference: 'ACC',
+        year: null,
+        position: null,
+        height: null,
+        importStatus: null,
+      },
+      {
+        id: 'espn:200',
+        espnId: '200',
+        name: 'Drew Evans',
+        school: 'Lake State',
+        conference: 'Big Ten',
+        year: null,
+        position: null,
+        height: null,
+        importStatus: null,
+      },
+    ]);
+
+    expect(plan.counts.ATTACH_ESPN_ID_PROTECTED).toBe(1);
+    expect(plan.counts.ATTACH_ESPN_ID).toBe(1);
+
+    expect(plan.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        action: 'ATTACH_ESPN_ID_PROTECTED',
+        storedId: 'acc-1',
+        espnId: '100',
+      }),
+      expect.objectContaining({
+        action: 'ATTACH_ESPN_ID',
+        storedId: 'b10-1',
+        espnId: '200',
+      }),
+    ]));
+
+    const after = db.db.prepare(
+      `SELECT id, espn_id, name, school, conference
+         FROM players
+        ORDER BY id`,
+    ).all();
+
+    expect(after).toEqual(before);
+    db.close();
+  });
+
+  it('plans identity collisions for review instead of treating them as updates', async () => {
+    const { db } = await setup();
+
+    db.db.prepare(
+      `UPDATE players SET espn_id = '999' WHERE id = 'b10-1'`,
+    ).run();
+
+    const plan = await planPlayerUniverseReconciliation(db, [
+      {
+        id: 'acc-1',
+        espnId: '999',
+        name: 'Alex Carter',
+        school: 'North Metro',
+        conference: 'ACC',
+        year: null,
+        position: null,
+        height: null,
+        importStatus: null,
+      },
+    ]);
+
+    expect(plan.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        action: 'IDENTITY_CONFLICT_REVIEW',
+        storedId: 'acc-1',
+        espnId: '999',
+      }),
+    ]));
+
+    db.close();
+  });
+
+  it('plans retired and protected omitted players for review without mutation', async () => {
+    const { db, service } = await setup();
+
+    await service.start(0);
+    await service.pick({
+      ownerId: 'avery',
+      slotId: 'R1-P1',
+      playerId: 'acc-1',
+      nowMs: 1,
+    });
+
+    db.db.prepare(
+      `UPDATE players SET selectable = 0 WHERE id = 'sec-1'`,
+    ).run();
+
+    const plan = await planPlayerUniverseReconciliation(db, [
+      {
+        id: 'sec-1',
+        espnId: null,
+        name: 'Jamie Foster',
+        school: 'Central Tech',
+        conference: 'SEC',
+        year: null,
+        position: null,
+        height: null,
+        importStatus: null,
+      },
+    ]);
+
+    expect(plan.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        action: 'RETIRED_REVIEW',
+        storedId: 'sec-1',
+      }),
+      expect.objectContaining({
+        action: 'OMISSION_PROTECTED',
+        storedId: 'acc-1',
+      }),
+    ]));
+
+    expect(
+      db.db.prepare(`SELECT selectable FROM players WHERE id = 'sec-1'`).get(),
+    ).toEqual({ selectable: 0 });
+
+    db.close();
+  });
+
+  it('requires commissioner identity for the reconciliation-plan API and does not mutate players', async () => {
+    const { db } = await setup();
+
+    const body = [
+      'internal_id,espn_id,name,school,conference,year,position,height,source_status',
+      'acc-1,111,Alex Carter,North Metro,ACC,Sr,G,6-5,TORVIK_ESPN_ID',
+      '',
+    ].join('\n');
+
+    const denied = await handleApi(
+      new Request('https://example.test/api/commissioner/player-universe/plan', {
+        method: 'POST',
+        headers: {
+          'x-league-code': 'TIGER81',
+          'content-type': 'text/csv',
+        },
+        body,
+      }),
+      { DB: db },
+    );
+
+    expect(denied?.status).toBe(403);
+
+    const before = db.db.prepare(
+      `SELECT id, espn_id, name, school, conference
+         FROM players
+        ORDER BY id`,
+    ).all();
+
+    const allowed = await handleApi(
+      new Request('https://example.test/api/commissioner/player-universe/plan', {
+        method: 'POST',
+        headers: {
+          'x-league-code': 'BLUE42',
+          'content-type': 'text/csv',
+        },
+        body,
+      }),
+      { DB: db },
+    );
+
+    expect(allowed?.status).toBe(200);
+
+    const payload = await allowed?.json() as {
+      plan: {
+        incomingRows: number;
+        counts: Record<string, number>;
+      };
+    };
+
+    expect(payload.plan.incomingRows).toBe(1);
+
+    const after = db.db.prepare(
+      `SELECT id, espn_id, name, school, conference
+         FROM players
+        ORDER BY id`,
+    ).all();
+
+    expect(after).toEqual(before);
+
     db.close();
   });
 
