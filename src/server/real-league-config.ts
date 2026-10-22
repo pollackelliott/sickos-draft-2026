@@ -16,7 +16,7 @@ export const REAL_LEAGUE_OWNERS: readonly RealLeagueOwnerDefinition[] = [
   { id: 'owner-connor-kraus', name: 'Connor Kraus', draftPosition: 3, isCommissioner: false },
   { id: 'owner-dan-labosky', name: 'Dan Labosky', draftPosition: 4, isCommissioner: false },
   { id: 'owner-elliott-pollack', name: 'Elliott Pollack', draftPosition: 5, isCommissioner: true },
-  { id: 'owner-garrett-pollack', name: 'Garrett Pollack', draftPosition: 6, isCommissioner: false },
+  { id: 'owner-garrett-pollack', name: 'Garrett Pollack', draftPosition: 6, isCommissioner: true },
   { id: 'owner-harrison-rogalski', name: 'Harrison Rogalski', draftPosition: 7, isCommissioner: false },
   { id: 'owner-ivetta-abramyan', name: 'Ivetta Abramyan', draftPosition: 8, isCommissioner: false },
   { id: 'owner-jake', name: 'Jake', draftPosition: 9, isCommissioner: false },
