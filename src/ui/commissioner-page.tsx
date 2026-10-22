@@ -196,7 +196,7 @@ export function CommissionerPage(props: {
     <section className="section-block commissioner-page">
       <div className="section-heading">
         <div><p className="kicker">League administration</p><h2>Commissioner</h2></div>
-        <span className="badge">Elliott only</span>
+        <span className="badge">Commissioner tools</span>
       </div>
 
       {message && <p className="commissioner-message">{message}</p>}
