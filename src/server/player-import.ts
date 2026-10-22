@@ -1,4 +1,4 @@
-import { normalizeIdentityPart } from '../domain/index.js';
+import { canonicalConferenceName, normalizeIdentityPart } from '../domain/index.js';
 import type { D1Database, D1PreparedStatement, D1Result } from './d1-types.js';
 import { playerSortKey } from './player-sort.js';
 import { ACTIVE_DRAFT_ID } from './store-types.js';
@@ -253,7 +253,7 @@ export function parsePlayerUniverseCsv(csvText: string): ImportedPlayerRecord[] 
 
     const name = raw.name?.trim() ?? '';
     const school = raw.school?.trim() ?? '';
-    const conference = raw.conference?.trim() ?? '';
+    const conference = canonicalConferenceName(raw.conference ?? '');
     const espnId = cleanOptional(raw.espnId);
 
     if (!name || !school || !conference) {
