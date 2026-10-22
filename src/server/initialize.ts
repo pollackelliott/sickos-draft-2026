@@ -20,8 +20,8 @@ export async function initializeDraft(
   });
 
   const commissionerCount = input.owners.filter((owner) => owner.isCommissioner).length;
-  if (commissionerCount !== 1) {
-    throw new Error('Exactly one owner must be marked as commissioner.');
+  if (commissionerCount < 1) {
+    throw new Error('At least one owner must be marked as commissioner.');
   }
 
   const statements: D1PreparedStatement[] = [
