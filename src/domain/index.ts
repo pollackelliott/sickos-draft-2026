@@ -1,3 +1,4 @@
+export { canonicalConferenceName } from './conferences.js';
 export { DomainError } from './errors.js';
 export { generateSnakeSlots, orderedOwners } from './snake.js';
 export {
