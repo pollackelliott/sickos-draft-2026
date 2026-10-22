@@ -154,6 +154,37 @@ describe('Stage 5 commissioner API', () => {
     db.close();
   });
 
+  it('canonicalizes MAAC write-ins to Metro', async () => {
+    const { db, store } = await setup();
+    await handleApi(commissionerRequest('/api/commissioner/start'), { DB: db });
+
+    const response = await handleApi(request('/api/write-in', {
+      method: 'POST',
+      headers: {
+        'x-league-code': 'BLUE42',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        slotId: 'R1-P1',
+        name: 'Metro Player',
+        school: 'Metro School',
+        conference: 'MAAC',
+      }),
+    }), { DB: db });
+
+    expect(response?.status).toBe(200);
+    const snapshot = await store.loadSnapshot();
+    const slot = snapshot.state.slots.find((candidate) => candidate.id === 'R1-P1');
+    const player = snapshot.state.players.find((candidate) => candidate.id === slot?.playerId);
+    expect(player?.conference).toBe('Metro');
+
+    const storedSlot = db.db.prepare(
+      `SELECT selected_conference FROM draft_slots WHERE id = 'R1-P1'`,
+    ).get() as { selected_conference: string };
+    expect(storedSlot.selected_conference).toBe('Metro');
+    db.close();
+  });
+
   it('exports slot-ordered CSV and requires explicit reset confirmation', async () => {
     const { db, store, service } = await setup();
     const startedAt = Date.now();
