@@ -39,7 +39,7 @@ async function setupRealLeague() {
 }
 
 describe('Stage 6C real league setup', () => {
-  it('defines the 14-manager provisional league with Elliott as commissioner', () => {
+  it('defines the 14-manager provisional league with Elliott and Garrett as commissioners', () => {
     expect(REAL_LEAGUE_OWNERS).toHaveLength(14);
     expect(REAL_LEAGUE_OWNERS.map((owner) => owner.name)).toEqual([
       'Chris Barbas',
@@ -58,7 +58,7 @@ describe('Stage 6C real league setup', () => {
       'Werner Gunn',
     ]);
     expect(REAL_LEAGUE_OWNERS.filter((owner) => owner.isCommissioner).map((owner) => owner.name))
-      .toEqual(['Elliott Pollack']);
+      .toEqual(['Elliott Pollack', 'Garrett Pollack']);
     expect(REAL_LEAGUE_ROUNDS).toBe(18);
     expect(REAL_LEAGUE_CLOCK_DURATION_MS).toBe(24 * 60 * 60 * 1000);
   });
@@ -100,6 +100,7 @@ describe('Stage 6C real league setup', () => {
     expect(ownersAfter.find((owner) => owner.id === 'owner-jake')?.name).toBe('Jake Example');
     expect(ownersAfter.every((owner) => beforeCodes.get(owner.id) === owner.code)).toBe(true);
     expect(ownersAfter.find((owner) => owner.id === 'owner-elliott-pollack')?.isCommissioner).toBe(true);
+    expect(ownersAfter.find((owner) => owner.id === 'owner-garrett-pollack')?.isCommissioner).toBe(true);
 
     const snapshot = await store.loadSnapshot();
     expect(snapshot.state.slots[0].ownerId).toBe('owner-werner-gunn');
