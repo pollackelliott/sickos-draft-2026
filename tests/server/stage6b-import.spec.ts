@@ -70,6 +70,14 @@ describe('Stage 6B player-universe import', () => {
     }]);
   });
 
+  it('canonicalizes the current MAAC name to Metro during import', () => {
+    const parsed = parsePlayerUniverseCsv(csv([
+      'espn:999,999,Metro Player,Metro School,MAAC,Sr,G,6-4,ESPN',
+    ]));
+
+    expect(parsed[0]?.conference).toBe('Metro');
+  });
+
   it('parses quoted canonical CSV and rejects missing durable identity', () => {
     const parsed = parsePlayerUniverseCsv(csv([
       'espn:123,123,"Doe, John","North ""Metro""",ACC,Sr,G,"6\' 4""",TORVIK_ESPN_ID',
