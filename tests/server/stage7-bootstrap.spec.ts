@@ -31,7 +31,7 @@ describe('Stage 7 deployment bootstrap', () => {
 
     expect((db.prepare('SELECT COUNT(*) AS count FROM owners').get() as { count: number }).count).toBe(14);
     expect((db.prepare('SELECT COUNT(*) AS count FROM draft_slots').get() as { count: number }).count).toBe(252);
-    expect((db.prepare('SELECT COUNT(*) AS count FROM owners WHERE is_commissioner = 1').get() as { count: number }).count).toBe(1);
+    expect((db.prepare('SELECT COUNT(*) AS count FROM owners WHERE is_commissioner = 1').get() as { count: number }).count).toBe(2);
 
     const first = db.prepare(
       'SELECT o.name FROM draft_slots s JOIN owners o ON o.id = s.owner_id WHERE s.overall_pick = 1',
