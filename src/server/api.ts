@@ -1,4 +1,4 @@
-import { DomainError, type DraftState } from '../domain/index.js';
+import { canonicalConferenceName, DomainError, type DraftState } from '../domain/index.js';
 import { authenticateOwner } from './auth.js';
 import { D1DraftStore } from './d1-store.js';
 import { DraftService } from './service.js';
@@ -339,7 +339,8 @@ export async function handleApi(request: Request, env: WorkerEnv): Promise<Respo
       const slotId = requiredString(body?.slotId);
       const name = requiredString(body?.name);
       const school = requiredString(body?.school);
-      const conference = requiredString(body?.conference);
+      const conferenceInput = requiredString(body?.conference);
+      const conference = conferenceInput ? canonicalConferenceName(conferenceInput) : null;
       if (!slotId || !name || !school || !conference) {
         return json({ error: 'Player name, school, conference, and draft slot are required.' }, { status: 400 });
       }
