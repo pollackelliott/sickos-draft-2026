@@ -157,7 +157,7 @@ describe('Stage 5 commissioner API', () => {
 
   it('accepts only server-proven pick-ahead selections and preserves the active clock', async () => {
     const { db, store, service } = await setup();
-    const startedAt = 1_000;
+    const startedAt = Date.now();
     await service.start(startedAt, 'avery');
     await service.pick({ ownerId: 'avery', slotId: 'R1-P1', playerId: 'acc-1', nowMs: startedAt + 1 });
     await service.pick({ ownerId: 'jordan', slotId: 'R1-P2', playerId: 'b10-1', nowMs: startedAt + 2 });
