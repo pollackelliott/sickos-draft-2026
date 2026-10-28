@@ -59,6 +59,12 @@ export interface SubmitPickCommand {
   nowMs: number;
 }
 
+export interface SubmitPickAheadCommand {
+  ownerId: OwnerId;
+  playerId: PlayerId;
+  nowMs: number;
+}
+
 export interface SubmitWriteInPickCommand {
   ownerId: OwnerId;
   slotId: SlotId;
