@@ -5,13 +5,16 @@ import {
   generateSnakeSlots,
   getActiveSlot,
   pauseDraft,
+  pickAheadEligibility,
   reconcileExpiredSlots,
+  removeCompletedPick,
   replaceCompletedPick,
   resetDraft,
   resumeDraft,
   setClockDuration,
   startDraft,
   submitPick,
+  submitPickAhead,
   submitWriteInPick,
   type DraftState,
   type Owner,
@@ -33,6 +36,7 @@ const players: Player[] = [
   { id: 'b10-2', name: 'Cameron Jones', school: 'River State', conference: 'Big Ten', source: 'IMPORTED' },
   { id: 'sec-1', name: 'Jamie Foster', school: 'Central Tech', conference: 'SEC', source: 'IMPORTED' },
   { id: 'be-1', name: 'Taylor Green', school: 'Coastal College', conference: 'Big East', source: 'IMPORTED' },
+  { id: 'be-2', name: 'Robin White', school: 'Harbor College', conference: 'Big East', source: 'IMPORTED' },
   { id: 'b12-1', name: 'Riley Hayes', school: 'Western University', conference: 'Big 12', source: 'IMPORTED' },
   { id: 'mvc-1', name: 'Devin Nelson', school: 'Prairie State', conference: 'Missouri Valley', source: 'IMPORTED' },
   { id: 'a10-1', name: 'Skyler Owens', school: 'Harbor University', conference: 'Atlantic 10', source: 'IMPORTED' },
@@ -168,6 +172,90 @@ describe('expiration and backfills', () => {
     expect(errorCode(() => submitPick(state, {
       ownerId: 'avery', slotId: 'R1-P1', playerId: 'acc-2', nowMs: 33 * HOUR,
     }))).toBe('CONFERENCE_ALREADY_USED');
+  });
+});
+
+describe('pick ahead', () => {
+  function stateWithMorganOnRoundTwo(): DraftState {
+    let state = startDraft(fresh(2), 0);
+    state = submitPick(state, { ownerId: 'avery', slotId: 'R1-P1', playerId: 'acc-1', nowMs: 1 });
+    state = submitPick(state, { ownerId: 'jordan', slotId: 'R1-P2', playerId: 'b10-1', nowMs: 2 });
+    state = submitPick(state, { ownerId: 'casey', slotId: 'R1-P3', playerId: 'sec-1', nowMs: 3 });
+    state = submitPick(state, { ownerId: 'morgan', slotId: 'R1-P4', playerId: 'be-1', nowMs: 4 });
+    return state;
+  }
+
+  it('allows the next future slot when every owner before it has already used the conference', () => {
+    let state = stateWithMorganOnRoundTwo();
+    const deadline = state.activeDeadlineMs;
+    const eligibility = pickAheadEligibility(state, players.find((player) => player.id === 'be-2')!, 'casey');
+
+    expect(eligibility.eligible).toBe(true);
+    expect(eligibility.targetSlot?.id).toBe('R2-P2');
+
+    state = submitPickAhead(state, {
+      ownerId: 'casey',
+      playerId: 'be-2',
+      nowMs: 5,
+    });
+
+    expect(state.slots.find((slot) => slot.id === 'R2-P2')?.status).toBe('COMPLETE');
+    expect(state.slots.find((slot) => slot.id === 'R2-P2')?.playerId).toBe('be-2');
+    expect(state.activeSlotId).toBe('R2-P1');
+    expect(state.activeDeadlineMs).toBe(deadline);
+
+    state = submitPick(state, {
+      ownerId: 'morgan',
+      slotId: 'R2-P1',
+      playerId: 'b12-1',
+      nowMs: 6,
+    });
+    expect(state.activeSlotId).toBe('R2-P3');
+  });
+
+  it('blocks pick ahead when any intervening owner can still use that conference', () => {
+    const state = stateWithMorganOnRoundTwo();
+    const eligibility = pickAheadEligibility(state, players.find((player) => player.id === 'be-2')!, 'jordan');
+
+    expect(eligibility.eligible).toBe(false);
+    expect(eligibility.targetSlot?.id).toBe('R2-P3');
+    expect(errorCode(() => submitPickAhead(state, {
+      ownerId: 'jordan',
+      playerId: 'be-2',
+      nowMs: 5,
+    }))).toBe('PICK_AHEAD_NOT_AVAILABLE');
+  });
+
+  it('blocks pick ahead when an older owed owner can still use the conference', () => {
+    let state = reconcileExpiredSlots(startDraft(fresh(2), 0), 25 * HOUR);
+    state = submitPick(state, { ownerId: 'jordan', slotId: 'R1-P2', playerId: 'acc-1', nowMs: 25 * HOUR + 1 });
+    state = submitPick(state, { ownerId: 'casey', slotId: 'R1-P3', playerId: 'sec-1', nowMs: 25 * HOUR + 2 });
+    state = submitPick(state, { ownerId: 'morgan', slotId: 'R1-P4', playerId: 'be-1', nowMs: 25 * HOUR + 3 });
+
+    expect(state.slots.find((slot) => slot.id === 'R1-P1')?.status).toBe('OWED');
+    const eligibility = pickAheadEligibility(state, players.find((player) => player.id === 'be-2')!, 'casey');
+    expect(eligibility.eligible).toBe(false);
+  });
+
+  it('returns a removed pick-ahead slot to FUTURE while its scheduled turn is still ahead', () => {
+    let state = stateWithMorganOnRoundTwo();
+    state = submitPickAhead(state, { ownerId: 'casey', playerId: 'be-2', nowMs: 5 });
+    const deadline = state.activeDeadlineMs;
+
+    state = removeCompletedPick(state, 'R2-P2');
+    expect(state.slots.find((slot) => slot.id === 'R2-P2')?.status).toBe('FUTURE');
+    expect(state.activeSlotId).toBe('R2-P1');
+    expect(state.activeDeadlineMs).toBe(deadline);
+  });
+
+  it('requires a still-future pick-ahead selection to be removed before commissioner replacement', () => {
+    let state = stateWithMorganOnRoundTwo();
+    state = submitPickAhead(state, { ownerId: 'casey', playerId: 'be-2', nowMs: 5 });
+
+    expect(errorCode(() => replaceCompletedPick(state, {
+      slotId: 'R2-P2',
+      playerId: 'wcc-1',
+    }))).toBe('SLOT_NOT_AVAILABLE');
   });
 });
 
