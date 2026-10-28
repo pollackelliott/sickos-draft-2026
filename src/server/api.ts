@@ -332,6 +332,21 @@ export async function handleApi(request: Request, env: WorkerEnv): Promise<Respo
       return json({ draft: publicState(snapshot.state, snapshot.revision) });
     }
 
+    if (request.method === 'POST' && url.pathname === '/api/pick-ahead') {
+      const owner = await authenticateOwner(store, request);
+      if (!owner) return json({ error: 'Enter a valid league code to draft.' }, { status: 401 });
+      const body = await bodyJson<{ playerId?: unknown }>(request);
+      const playerId = requiredString(body?.playerId);
+      if (!playerId) return json({ error: 'playerId is required.' }, { status: 400 });
+
+      const snapshot = await service.pickAhead({
+        ownerId: owner.id,
+        playerId,
+        nowMs: Date.now(),
+      });
+      return json({ draft: publicState(snapshot.state, snapshot.revision) });
+    }
+
     if (request.method === 'POST' && url.pathname === '/api/write-in') {
       const owner = await authenticateOwner(store, request);
       if (!owner) return json({ error: 'Enter a valid league code to draft.' }, { status: 401 });
