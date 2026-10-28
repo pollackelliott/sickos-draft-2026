@@ -6,6 +6,8 @@ export {
   getActiveSlot,
   getOldestOwedSlotForOwner,
   getOwnerRosterPlayers,
+  getPickAheadTarget,
+  pickAheadEligibility,
   pauseDraft,
   reconcileExpiredSlots,
   removeCompletedPick,
@@ -16,6 +18,7 @@ export {
   skipActiveSlot,
   startDraft,
   submitPick,
+  submitPickAhead,
   submitWriteInPick,
 } from './engine.js';
 export { findPlayerByNormalizedNameSchool, normalizeIdentityPart } from './writeIns.js';
