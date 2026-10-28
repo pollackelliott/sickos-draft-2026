@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DraftApiClient, type PublicDraft, type SessionOwner } from '../api/client';
-import type { Player } from '../domain/index';
+import { pickAheadEligibility, type Player } from '../domain/index';
 import { defaultPickTarget, ownerPickTargets, playerDraftability } from './draft-actions';
 import { errorMessage } from './errors';
 import { ConfirmPickModal, WriteInModal } from './modals';
@@ -28,6 +28,7 @@ export function PlayersPage(props: {
   const defaultTarget = props.owner ? defaultPickTarget(props.draft, props.owner.id) : undefined;
   const [targetId, setTargetId] = useState(defaultTarget?.id ?? '');
   const [confirmPlayer, setConfirmPlayer] = useState<Player | null>(null);
+  const [confirmMode, setConfirmMode] = useState<'normal' | 'pickAhead'>('normal');
   const [confirmError, setConfirmError] = useState('');
   const [working, setWorking] = useState(false);
   const [writeOpen, setWriteOpen] = useState(false);
@@ -80,15 +81,24 @@ export function PlayersPage(props: {
     return playerDraftability(props.draft, player, props.owner.id).available;
   });
   const displayTotal = draftedOnly ? visible.length : total;
+  const confirmPickAhead = confirmPlayer && props.owner
+    ? pickAheadEligibility(props.draft, confirmPlayer, props.owner.id)
+    : null;
+  const confirmSlot = confirmMode === 'pickAhead'
+    ? confirmPickAhead?.targetSlot ?? null
+    : selectedTarget ?? null;
 
   async function submitPick() {
-    if (!props.code || !confirmPlayer || !selectedTarget) return;
+    if (!props.code || !confirmPlayer || !confirmSlot) return;
     setWorking(true);
     setConfirmError('');
     try {
-      const draft = await api.pick(props.code, selectedTarget.id, confirmPlayer.id);
+      const draft = confirmMode === 'pickAhead'
+        ? await api.pickAhead(props.code, confirmPlayer.id)
+        : await api.pick(props.code, confirmSlot.id, confirmPlayer.id);
       props.onDraftChanged(draft);
       setConfirmPlayer(null);
+      setConfirmMode('normal');
       await loadPlayers();
     } catch (caught) {
       setConfirmError(errorMessage(caught));
@@ -124,7 +134,7 @@ export function PlayersPage(props: {
           <button type="button" className="button secondary compact" onClick={() => setWriteOpen(true)}>Write-in</button>
         </div>
       )}
-      {props.owner && targets.length === 0 && <p className="browse-note">You can browse the pool now. Draft controls will appear when you are on the clock or owe a pick.</p>}
+      {props.owner && targets.length === 0 && <p className="browse-note">You can browse the pool now. Draft controls will appear when you are on the clock, owe a pick, or have a safe pick-ahead opportunity.</p>}
       {!props.owner && <p className="browse-note">Spectator view. Enter your league code above to enable picks when eligible.</p>}
 
       <div className="player-tools">
@@ -146,11 +156,20 @@ export function PlayersPage(props: {
             const availability = props.owner ? playerDraftability(props.draft, player, props.owner.id) : draftedSlot
               ? { available: false, reason: `Drafted by ${draftedOwner?.name ?? 'another owner'} · ${formatSlot(draftedSlot)}` }
               : { available: true, reason: 'Available' };
+            const pickAhead = props.owner
+              ? pickAheadEligibility(props.draft, player, props.owner.id)
+              : null;
             const canDraft = Boolean(props.owner && props.code && selectedTarget && availability.available);
+            const canPickAhead = Boolean(props.owner && props.code && pickAhead?.eligible && pickAhead.targetSlot);
+            const statusText = canPickAhead ? `Pick ahead eligible · ${formatSlot(pickAhead!.targetSlot!)}` : availability.reason;
             return (
               <div className={`player-card ${availability.available ? '' : 'is-drafted'}`} key={player.id}>
                 <div className="player-main"><strong>{player.name}</strong><span>{player.school} · {player.conference}</span></div>
-                <div className="player-card-action"><span className={`availability ${availability.available ? 'available' : 'drafted'}`}>{availability.reason}</span>{canDraft && <button type="button" className="button primary compact" onClick={() => { setConfirmError(''); setConfirmPlayer(player); }}>Draft</button>}</div>
+                <div className="player-card-action">
+                  <span className={`availability ${availability.available ? 'available' : 'drafted'}`}>{statusText}</span>
+                  {canDraft && <button type="button" className="button primary compact" onClick={() => { setConfirmError(''); setConfirmMode('normal'); setConfirmPlayer(player); }}>Draft</button>}
+                  {canPickAhead && <button type="button" className="button primary compact" onClick={() => { setConfirmError(''); setConfirmMode('pickAhead'); setConfirmPlayer(player); }}>Pick ahead</button>}
+                </div>
               </div>
             );
           })}
@@ -158,7 +177,7 @@ export function PlayersPage(props: {
         </div>
       )}
 
-      <ConfirmPickModal player={confirmPlayer} slot={selectedTarget ?? null} working={working} error={confirmError} onCancel={() => { if (!working) setConfirmPlayer(null); }} onConfirm={() => void submitPick()} />
+      <ConfirmPickModal player={confirmPlayer} slot={confirmSlot} mode={confirmMode} working={working} error={confirmError} onCancel={() => { if (!working) { setConfirmPlayer(null); setConfirmMode('normal'); } }} onConfirm={() => void submitPick()} />
       <WriteInModal open={writeOpen} targets={targets} defaultTargetId={selectedTarget?.id ?? ''} working={working} error={writeError} onCancel={() => { if (!working) setWriteOpen(false); }} onSubmit={(input) => void submitWriteIn(input)} />
     </section>
   );
