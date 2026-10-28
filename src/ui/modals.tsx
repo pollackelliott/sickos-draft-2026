@@ -72,26 +72,32 @@ export function ConfirmPickModal(props: {
   slot: DraftSlot | null;
   working: boolean;
   error: string;
+  mode?: 'normal' | 'pickAhead';
   onCancel: () => void;
   onConfirm: () => void;
 }) {
   if (!props.player || !props.slot) return null;
+  const pickAhead = props.mode === 'pickAhead';
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={props.onCancel}>
       <section className="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" onMouseDown={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-        <p className="kicker">Confirm selection</p>
-        <h2 id="confirm-title">Draft {props.player.name}?</h2>
+        <p className="kicker">{pickAhead ? 'Confirm pick ahead' : 'Confirm selection'}</p>
+        <h2 id="confirm-title">{pickAhead ? 'Pick ahead with' : 'Draft'} {props.player.name}?</h2>
         <div className="confirm-player">
           <strong>{props.player.name}</strong>
           <span>{props.player.school}</span>
           <em>{props.player.conference}</em>
         </div>
-        <p className="modal-copy">This will fill <strong>{formatSlot(props.slot)}</strong>{props.slot.status === 'OWED' ? ' as an owed-pick backfill' : ''}.</p>
+        <p className="modal-copy">
+          {pickAhead
+            ? <>This will fill <strong>{formatSlot(props.slot)}</strong> early. Every manager who can still pick before that slot has already used {props.player.conference}. The current on-clock pick and deadline will not change.</>
+            : <>This will fill <strong>{formatSlot(props.slot)}</strong>{props.slot.status === 'OWED' ? ' as an owed-pick backfill' : ''}.</>}
+        </p>
         {props.error && <p className="form-error">{props.error}</p>}
         <div className="modal-actions">
           <button type="button" className="button secondary" disabled={props.working} onClick={props.onCancel}>Cancel</button>
           <button type="button" className="button primary" disabled={props.working} onClick={props.onConfirm}>
-            {props.working ? 'Submitting…' : 'Draft player'}
+            {props.working ? 'Submitting…' : pickAhead ? 'Pick ahead' : 'Draft player'}
           </button>
         </div>
       </section>
