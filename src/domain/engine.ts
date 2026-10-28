@@ -7,6 +7,7 @@ import type {
   Owner,
   Player,
   PlayerId,
+  SubmitPickAheadCommand,
   SubmitPickCommand,
   SubmitWriteInPickCommand,
 } from './types.js';
@@ -84,6 +85,91 @@ export function getOwnerRosterPlayers(state: DraftState, ownerId: string): Playe
     .map((slot) => slot.playerId as string);
   const wanted = new Set(playerIds);
   return state.players.filter((player) => wanted.has(player.id));
+}
+
+export interface PickAheadEligibility {
+  eligible: boolean;
+  reason: string;
+  targetSlot: DraftSlot | null;
+}
+
+function ownerHasConference(state: DraftState, ownerId: string, conference: string): boolean {
+  const playersById = new Map(state.players.map((player) => [player.id, player]));
+  return state.slots.some((slot) => {
+    if (slot.ownerId !== ownerId || slot.status !== 'COMPLETE' || !slot.playerId) return false;
+    return playersById.get(slot.playerId)?.conference === conference;
+  });
+}
+
+export function getPickAheadTarget(state: DraftState, ownerId: string): DraftSlot | undefined {
+  if (state.lifecycle !== 'IN_PROGRESS' || state.paused) return undefined;
+
+  const hasImmediatePick = state.slots.some(
+    (slot) => slot.ownerId === ownerId && (slot.status === 'ON_CLOCK' || slot.status === 'OWED'),
+  );
+  if (hasImmediatePick) return undefined;
+
+  return state.slots
+    .filter((slot) => slot.ownerId === ownerId && slot.status === 'FUTURE')
+    .sort((a, b) => a.overallPick - b.overallPick)[0];
+}
+
+export function pickAheadEligibility(
+  state: DraftState,
+  player: Player,
+  ownerId: string,
+): PickAheadEligibility {
+  if (state.lifecycle !== 'IN_PROGRESS') {
+    return { eligible: false, reason: 'The draft is not active.', targetSlot: null };
+  }
+  if (state.paused) {
+    return { eligible: false, reason: 'The draft is paused.', targetSlot: null };
+  }
+  if (!state.owners.some((owner) => owner.id === ownerId)) {
+    return { eligible: false, reason: 'That owner does not exist.', targetSlot: null };
+  }
+
+  const immediate = state.slots.find(
+    (slot) => slot.ownerId === ownerId && (slot.status === 'ON_CLOCK' || slot.status === 'OWED'),
+  );
+  if (immediate) {
+    return { eligible: false, reason: 'Use your current or owed pick first.', targetSlot: null };
+  }
+
+  const targetSlot = getPickAheadTarget(state, ownerId);
+  if (!targetSlot) {
+    return { eligible: false, reason: 'There is no future slot available to pick ahead into.', targetSlot: null };
+  }
+
+  if (state.slots.some((slot) => slot.status === 'COMPLETE' && slot.playerId === player.id)) {
+    return { eligible: false, reason: 'That player was already drafted.', targetSlot };
+  }
+
+  if (ownerHasConference(state, ownerId, player.conference)) {
+    return { eligible: false, reason: `${player.conference} already used.`, targetSlot };
+  }
+
+  const blockingOwners = new Set(
+    state.slots
+      .filter((slot) => slot.status !== 'COMPLETE' && slot.overallPick < targetSlot.overallPick)
+      .map((slot) => slot.ownerId),
+  );
+
+  for (const blockingOwnerId of blockingOwners) {
+    if (!ownerHasConference(state, blockingOwnerId, player.conference)) {
+      return {
+        eligible: false,
+        reason: `A manager who can pick before ${targetSlot.round}.${String(targetSlot.roundPick).padStart(2, '0')} can still draft from ${player.conference}.`,
+        targetSlot,
+      };
+    }
+  }
+
+  return {
+    eligible: true,
+    reason: `Safe to pick ahead into ${targetSlot.round}.${String(targetSlot.roundPick).padStart(2, '0')}.`,
+    targetSlot,
+  };
 }
 
 function nextFutureSlot(state: DraftState): DraftSlot | undefined {
@@ -206,6 +292,35 @@ function requireEligiblePlayerForOwner(
   }
 
   return player;
+}
+
+export function submitPickAhead(state: DraftState, command: SubmitPickAheadCommand): DraftState {
+  const reconciled = reconcileExpiredSlots(state, command.nowMs);
+  requireDraftCanAcceptPick(reconciled);
+
+  if (!reconciled.owners.some((owner) => owner.id === command.ownerId)) {
+    throw new DomainError('OWNER_NOT_FOUND', 'That owner does not exist.');
+  }
+
+  const player = reconciled.players.find((candidate) => candidate.id === command.playerId);
+  if (!player) {
+    throw new DomainError('PLAYER_NOT_FOUND', 'That player does not exist in the player pool.');
+  }
+
+  const eligibility = pickAheadEligibility(reconciled, player, command.ownerId);
+  if (!eligibility.eligible || !eligibility.targetSlot) {
+    throw new DomainError('PICK_AHEAD_NOT_AVAILABLE', eligibility.reason);
+  }
+
+  const next = cloneState(reconciled);
+  const target = next.slots.find((slot) => slot.id === eligibility.targetSlot!.id)!;
+  target.status = 'COMPLETE';
+  target.playerId = command.playerId;
+  target.selectedAtMs = command.nowMs;
+  target.selectionKind = 'NORMAL';
+
+  markCompleteIfFinished(next, command.nowMs);
+  return next;
 }
 
 export function submitPick(state: DraftState, command: SubmitPickCommand): DraftState {
@@ -363,6 +478,14 @@ export function replaceCompletedPick(
     throw new DomainError('SLOT_NOT_AVAILABLE', 'Only a completed pick can be corrected.');
   }
 
+  const active = getActiveSlot(state);
+  if (active && slot.overallPick > active.overallPick) {
+    throw new DomainError(
+      'SLOT_NOT_AVAILABLE',
+      'Remove this pick-ahead selection before replacing it so eligibility can be rechecked.',
+    );
+  }
+
   requireEligiblePlayerForOwner(state, slot.ownerId, input.playerId, slot.id);
   const next = cloneState(state);
   const target = next.slots.find((candidate) => candidate.id === input.slotId)!;
@@ -381,7 +504,8 @@ export function removeCompletedPick(state: DraftState, slotId: string): DraftSta
 
   const next = cloneState(state);
   const target = next.slots.find((candidate) => candidate.id === slotId)!;
-  target.status = 'OWED';
+  const active = getActiveSlot(state);
+  target.status = active && target.overallPick > active.overallPick ? 'FUTURE' : 'OWED';
   target.playerId = null;
   target.selectedAtMs = null;
   target.selectionKind = null;
