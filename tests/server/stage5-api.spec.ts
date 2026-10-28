@@ -25,6 +25,7 @@ const owners: OwnerRecord[] = [
 const players: Player[] = [
   { id: 'acc-1', name: 'Alex Carter', school: 'North Metro', conference: 'ACC', source: 'IMPORTED' },
   { id: 'b10-1', name: 'Drew Evans', school: 'Lake State', conference: 'Big Ten', source: 'IMPORTED' },
+  { id: 'b10-2', name: 'Cameron Jones', school: 'River State', conference: 'Big Ten', source: 'IMPORTED' },
   { id: 'sec-1', name: 'Jamie Foster', school: 'Central Tech', conference: 'SEC', source: 'IMPORTED' },
   { id: 'be-1', name: 'Taylor Green', school: 'Coastal College', conference: 'Big East', source: 'IMPORTED' },
 ];
@@ -151,6 +152,53 @@ describe('Stage 5 commissioner API', () => {
     expect(first?.playerId).toBeNull();
     expect(snapshot.state.slots.find((slot) => slot.id === 'R1-P2')?.playerId).toBe('b10-1');
     expect(snapshot.state.activeSlotId).toBe(activeBefore);
+    db.close();
+  });
+
+  it('accepts only server-proven pick-ahead selections and preserves the active clock', async () => {
+    const { db, store, service } = await setup();
+    const startedAt = 1_000;
+    await service.start(startedAt, 'avery');
+    await service.pick({ ownerId: 'avery', slotId: 'R1-P1', playerId: 'acc-1', nowMs: startedAt + 1 });
+    await service.pick({ ownerId: 'jordan', slotId: 'R1-P2', playerId: 'b10-1', nowMs: startedAt + 2 });
+
+    const before = await store.loadSnapshot();
+    expect(before.state.activeSlotId).toBe('R2-P1');
+    const deadline = before.state.activeDeadlineMs;
+
+    const blocked = await handleApi(request('/api/pick-ahead', {
+      method: 'POST',
+      headers: {
+        'x-league-code': 'BLUE42',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ playerId: 'sec-1' }),
+    }), { DB: db });
+    expect(blocked?.status).toBe(409);
+
+    const accepted = await handleApi(request('/api/pick-ahead', {
+      method: 'POST',
+      headers: {
+        'x-league-code': 'BLUE42',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ playerId: 'b10-2' }),
+    }), { DB: db });
+    expect(accepted?.status).toBe(200);
+
+    const after = await store.loadSnapshot();
+    expect(after.state.activeSlotId).toBe('R2-P1');
+    expect(after.state.activeDeadlineMs).toBe(deadline);
+    expect(after.state.slots.find((slot) => slot.id === 'R2-P2')?.playerId).toBe('b10-2');
+
+    const event = db.db.prepare(
+      `SELECT event_type, slot_id, player_id FROM draft_events ORDER BY id DESC LIMIT 1`,
+    ).get() as { event_type: string; slot_id: string; player_id: string };
+    expect(event).toEqual({
+      event_type: 'PICK_AHEAD_SUBMITTED',
+      slot_id: 'R2-P2',
+      player_id: 'b10-2',
+    });
     db.close();
   });
 
