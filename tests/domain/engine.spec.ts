@@ -176,8 +176,8 @@ describe('expiration and backfills', () => {
 });
 
 describe('pick ahead', () => {
-  function stateWithMorganOnRoundTwo(): DraftState {
-    let state = startDraft(fresh(2), 0);
+  function stateWithMorganOnRoundTwo(rounds = 2): DraftState {
+    let state = startDraft(fresh(rounds), 0);
     state = submitPick(state, { ownerId: 'avery', slotId: 'R1-P1', playerId: 'acc-1', nowMs: 1 });
     state = submitPick(state, { ownerId: 'jordan', slotId: 'R1-P2', playerId: 'b10-1', nowMs: 2 });
     state = submitPick(state, { ownerId: 'casey', slotId: 'R1-P3', playerId: 'sec-1', nowMs: 3 });
@@ -235,6 +235,19 @@ describe('pick ahead', () => {
     expect(state.slots.find((slot) => slot.id === 'R1-P1')?.status).toBe('OWED');
     const eligibility = pickAheadEligibility(state, players.find((player) => player.id === 'be-2')!, 'casey');
     expect(eligibility.eligible).toBe(false);
+  });
+
+  it('does not allow a second future pick ahead before the first one reaches the live frontier', () => {
+    let state = stateWithMorganOnRoundTwo(3);
+    state = submitPickAhead(state, { ownerId: 'casey', playerId: 'be-2', nowMs: 5 });
+
+    const eligibility = pickAheadEligibility(
+      state,
+      players.find((player) => player.id === 'mvc-1')!,
+      'casey',
+    );
+    expect(eligibility.eligible).toBe(false);
+    expect(eligibility.targetSlot).toBeNull();
   });
 
   it('returns a removed pick-ahead slot to FUTURE while its scheduled turn is still ahead', () => {
