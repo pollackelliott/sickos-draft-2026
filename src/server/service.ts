@@ -1,6 +1,7 @@
 import {
   DomainError,
   pauseDraft,
+  pickAheadEligibility,
   reconcileExpiredSlots,
   removeCompletedPick,
   replaceCompletedPick,
@@ -10,6 +11,7 @@ import {
   skipActiveSlot,
   startDraft,
   submitPick,
+  submitPickAhead,
   submitWriteInPick,
   type DraftState,
   type Player,
@@ -104,6 +106,34 @@ export class DraftService {
         event: {
           type: 'PICK_SUBMITTED', actorOwnerId: input.actorOwnerId ?? input.ownerId, slotId: input.slotId,
           playerId: input.playerId, createdAtMs: input.nowMs,
+        },
+      };
+    });
+  }
+
+  async pickAhead(input: { ownerId: string; playerId: string; nowMs: number; actorOwnerId?: string }): Promise<PersistedDraftSnapshot> {
+    await this.reconcileBeforeMutation(input.nowMs);
+    const player = await this.store.getPlayer(input.playerId);
+    if (!player) throw new DomainError('PLAYER_NOT_FOUND', 'That player does not exist in the player pool.');
+
+    return this.persistWithRetry(input.nowMs, async (snapshot) => {
+      const hydrated = addPlayerIfMissing(snapshot.state, player);
+      const eligibility = pickAheadEligibility(hydrated, player, input.ownerId);
+      const target = eligibility.targetSlot;
+      const state = submitPickAhead(hydrated, input);
+
+      return {
+        state,
+        event: {
+          type: 'PICK_AHEAD_SUBMITTED',
+          actorOwnerId: input.actorOwnerId ?? input.ownerId,
+          slotId: target?.id ?? null,
+          playerId: input.playerId,
+          createdAtMs: input.nowMs,
+          details: target ? {
+            conference: player.conference,
+            targetOverallPick: target.overallPick,
+          } : null,
         },
       };
     });
