@@ -94,6 +94,15 @@ export class DraftApiClient {
     return result.draft;
   }
 
+  async pickAhead(code: string, playerId: string): Promise<PublicDraft> {
+    const result = await readJson<{ draft: PublicDraft }>(await this.fetcher('/api/pick-ahead', {
+      method: 'POST',
+      headers: { ...this.authHeaders(code), 'content-type': 'application/json' },
+      body: JSON.stringify({ playerId }),
+    }));
+    return result.draft;
+  }
+
   async writeIn(code: string, input: {
     slotId: string;
     name: string;
