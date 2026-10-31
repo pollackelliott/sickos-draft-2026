@@ -32,6 +32,8 @@ const owners: Owner[] = [
 const players: Player[] = [
   { id: 'acc-1', name: 'Alex Carter', school: 'North Metro', conference: 'ACC', source: 'IMPORTED' },
   { id: 'acc-2', name: 'Sam Irving', school: 'South Metro', conference: 'ACC', source: 'IMPORTED' },
+  { id: 'acc-3', name: 'Lee Adams', school: 'East Metro', conference: 'ACC', source: 'IMPORTED' },
+  { id: 'acc-4', name: 'Pat Brooks', school: 'West Metro', conference: 'ACC', source: 'IMPORTED' },
   { id: 'b10-1', name: 'Drew Evans', school: 'Lake State', conference: 'Big Ten', source: 'IMPORTED' },
   { id: 'b10-2', name: 'Cameron Jones', school: 'River State', conference: 'Big Ten', source: 'IMPORTED' },
   { id: 'sec-1', name: 'Jamie Foster', school: 'Central Tech', conference: 'SEC', source: 'IMPORTED' },
@@ -237,17 +239,51 @@ describe('pick ahead', () => {
     expect(eligibility.eligible).toBe(false);
   });
 
-  it('does not allow a second future pick ahead before the first one reaches the live frontier', () => {
-    let state = stateWithMorganOnRoundTwo(3);
-    state = submitPickAhead(state, { ownerId: 'casey', playerId: 'be-2', nowMs: 5 });
+  it('allows repeated pick-ahead selections when each successive future slot independently qualifies', () => {
+    let state = startDraft(fresh(5), 0);
 
-    const eligibility = pickAheadEligibility(
+    state = submitPick(state, { ownerId: 'avery', slotId: 'R1-P1', playerId: 'acc-1', nowMs: 1 });
+    state = submitPick(state, { ownerId: 'jordan', slotId: 'R1-P2', playerId: 'acc-2', nowMs: 2 });
+    state = submitPick(state, { ownerId: 'casey', slotId: 'R1-P3', playerId: 'sec-1', nowMs: 3 });
+    state = submitPick(state, { ownerId: 'morgan', slotId: 'R1-P4', playerId: 'acc-3', nowMs: 4 });
+
+    state = submitPick(state, { ownerId: 'morgan', slotId: 'R2-P1', playerId: 'be-1', nowMs: 5 });
+    state = submitPick(state, { ownerId: 'casey', slotId: 'R2-P2', playerId: 'b10-1', nowMs: 6 });
+    state = submitPick(state, { ownerId: 'jordan', slotId: 'R2-P3', playerId: 'b12-1', nowMs: 7 });
+    state = submitPick(state, { ownerId: 'avery', slotId: 'R2-P4', playerId: 'mvc-1', nowMs: 8 });
+
+    state = submitPick(state, { ownerId: 'avery', slotId: 'R3-P1', playerId: 'a10-1', nowMs: 9 });
+    state = submitPick(state, { ownerId: 'jordan', slotId: 'R3-P2', playerId: 'wcc-1', nowMs: 10 });
+    state = submitPick(state, { ownerId: 'casey', slotId: 'R3-P3', playerId: 'mwc-1', nowMs: 11 });
+    state = submitPick(state, { ownerId: 'morgan', slotId: 'R3-P4', playerId: 'aac-1', nowMs: 12 });
+
+    expect(state.activeSlotId).toBe('R4-P1');
+    const deadline = state.activeDeadlineMs;
+
+    const first = pickAheadEligibility(
       state,
-      players.find((player) => player.id === 'mvc-1')!,
+      players.find((player) => player.id === 'be-2')!,
       'casey',
     );
-    expect(eligibility.eligible).toBe(false);
-    expect(eligibility.targetSlot).toBeNull();
+    expect(first.eligible).toBe(true);
+    expect(first.targetSlot?.id).toBe('R4-P2');
+
+    state = submitPickAhead(state, { ownerId: 'casey', playerId: 'be-2', nowMs: 13 });
+
+    const second = pickAheadEligibility(
+      state,
+      players.find((player) => player.id === 'acc-4')!,
+      'casey',
+    );
+    expect(second.eligible).toBe(true);
+    expect(second.targetSlot?.id).toBe('R5-P3');
+
+    state = submitPickAhead(state, { ownerId: 'casey', playerId: 'acc-4', nowMs: 14 });
+
+    expect(state.slots.find((slot) => slot.id === 'R4-P2')?.playerId).toBe('be-2');
+    expect(state.slots.find((slot) => slot.id === 'R5-P3')?.playerId).toBe('acc-4');
+    expect(state.activeSlotId).toBe('R4-P1');
+    expect(state.activeDeadlineMs).toBe(deadline);
   });
 
   it('returns a removed pick-ahead slot to FUTURE while its scheduled turn is still ahead', () => {
