@@ -109,14 +109,6 @@ export function getPickAheadTarget(state: DraftState, ownerId: string): DraftSlo
   );
   if (hasImmediatePick) return undefined;
 
-  const active = getActiveSlot(state);
-  const alreadyPickedAhead = active
-    ? state.slots.some(
-        (slot) => slot.ownerId === ownerId && slot.status === 'COMPLETE' && slot.overallPick > active.overallPick,
-      )
-    : false;
-  if (alreadyPickedAhead) return undefined;
-
   return state.slots
     .filter((slot) => slot.ownerId === ownerId && slot.status === 'FUTURE')
     .sort((a, b) => a.overallPick - b.overallPick)[0];
